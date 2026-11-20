@@ -19,6 +19,18 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column]
     public string $password = '';
 
+    #[ORM\Column(options: ['default' => false])]
+    public bool $isVerified = false;
+
+    #[ORM\Column(options: ['default' => false])]
+    public bool $liveAiEnabled = false;
+
+    #[ORM\Column(length: 64, unique: true, nullable: true)]
+    public ?string $verificationHash = null;
+
+    #[ORM\Column(nullable: true)]
+    public ?\DateTimeImmutable $verificationExpiresAt = null;
+
     #[ORM\Column]
     public \DateTimeImmutable $createdAt;
 

@@ -35,7 +35,7 @@ final class ApplicationTest extends WebTestCase
     private \Symfony\Bundle\FrameworkBundle\KernelBrowser $client;
     private function user(string $email): User
     {
-        $user = new User(); $user->email = $email; $user->password = password_hash('valid-local-test-password', PASSWORD_BCRYPT, ['cost' => 4]);
+        $user = new User(); $user->isVerified = true; $user->liveAiEnabled = true; $user->email = $email; $user->password = password_hash('valid-local-test-password', PASSWORD_BCRYPT, ['cost' => 4]);
         $this->em->persist($user); $this->em->flush(); return $user;
     }
     private function createRun(string $mode = 'demo'): AgentRun
@@ -57,6 +57,12 @@ final class ApplicationTest extends WebTestCase
         $this->client->request('GET', '/matches/1/cv.pdf'); self::assertResponseRedirects('/login');
         $this->client->request('GET', '/login'); self::assertResponseIsSuccessful();
         self::assertResponseHeaderSame('X-Frame-Options', 'DENY'); self::assertSelectorExists('input[name="_csrf_token"]');
+    }
+    public function testWorkerChecksLiveAiPermissionAgainBeforeCallingModel(): void
+    {
+        $run = $this->createRun('live'); $this->owner->liveAiEnabled = false; $this->em->flush();
+        $this->runner()->run($run);
+        self::assertSame('failed', $run->status); self::assertSame(0, $run->modelCalls);
     }
     public function testLoginValidatesPasswordAndCsrf(): void
     {

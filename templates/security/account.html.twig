@@ -1,0 +1,3 @@
+{% extends 'base.html.twig' %}
+{% block title %}{{ heading|trans }} — WorkLook{% endblock %}
+{% block guest %}<div class="login-layout"><section class="login-story"><a class="brand" href="{{ path('app_login') }}"><span class="brand-mark">w.</span><span>worklook.</span></a><span class="eyebrow">{{ 'login.eyebrow'|trans }}</span><h1>{{ 'login.less'|trans }}<br>{{ 'login.more'|trans }}<br><em>{{ 'login.opportunities'|trans }}</em></h1><p>{{ 'login.story'|trans }}</p></section><section class="login-panel"><div class="login-card">{% include '_language_switcher.html.twig' %}<h2>{{ heading|trans }}</h2>{% block account_form %}{% endblock %}<p class="login-help"><a href="{{ path('app_login') }}">{{ 'registration.back_login'|trans }}</a></p></div></section></div>{% endblock %}

@@ -1,0 +1,7 @@
+{% extends 'security/account.html.twig' %}
+{% set heading = 'registration.verify_title' %}
+{% block account_form %}
+<p class="muted">{{ 'registration.verify_intro'|trans }}</p>
+{% if error %}<div class="flash warning" role="alert">{{ error|trans }}</div>{% endif %}
+{% if enabled %}<form method="post" data-turbo="false" data-controller="verification"><input type="hidden" name="_token" value="{{ csrf_token('verify_email') }}"><label for="verification-code">{{ 'registration.code'|trans }}</label><input id="verification-code" name="verification_code" data-verification-target="code" required minlength="64" maxlength="64" autocomplete="off" spellcheck="false"><label for="password">{{ 'registration.new_password'|trans }}</label><input id="password" name="password" type="password" required minlength="15" maxlength="128" autocomplete="new-password"><label for="password-confirm">{{ 'registration.repeat_password'|trans }}</label><input id="password-confirm" name="password_confirm" type="password" required minlength="15" maxlength="128" autocomplete="new-password"><p class="login-help">{{ 'registration.password_length'|trans }}</p><button class="button primary full" type="submit">{{ 'registration.activate'|trans }} →</button></form>{% else %}<div class="flash warning">{{ 'registration.unavailable'|trans }}</div>{% endif %}
+{% endblock %}

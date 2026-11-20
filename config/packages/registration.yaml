@@ -1,0 +1,14 @@
+framework:
+    rate_limiter:
+        registration_ip:
+            policy: fixed_window
+            limit: 5
+            interval: '1 hour'
+        registration_email:
+            policy: fixed_window
+            limit: 3
+            interval: '1 hour'
+        registration_global:
+            policy: fixed_window
+            limit: 20
+            interval: '1 day'

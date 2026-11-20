@@ -16,7 +16,7 @@ final class LanguageController extends AbstractController
         }
         $returnTo = $request->request->get('return_to', '/');
         // Relative paths only: never redirect to a supplied host or back to a POST endpoint.
-        if (!is_string($returnTo) || !preg_match('~^/(?:login|profile|runs/[a-f0-9]{32}|matches/[0-9]+)?$~D', $returnTo)) {
+        if (!is_string($returnTo) || !preg_match('~^/(?:login|register|verify-email|profile|runs/[a-f0-9]{32}|matches/[0-9]+)?$~D', $returnTo)) {
             $returnTo = '/';
         }
         $response = $this->redirect($returnTo, Response::HTTP_SEE_OTHER);

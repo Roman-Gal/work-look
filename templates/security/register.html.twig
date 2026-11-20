@@ -1,0 +1,8 @@
+{% extends 'security/account.html.twig' %}
+{% set heading = 'registration.title' %}
+{% block account_form %}
+<p class="muted">{{ 'registration.intro'|trans }}</p>
+{% if notice %}<div class="flash success" role="status">{{ notice|trans }}</div>{% endif %}
+{% if error %}<div class="flash warning" role="alert">{{ error|trans }}</div>{% endif %}
+{% if enabled %}<form method="post" data-turbo="false"><input type="hidden" name="_token" value="{{ csrf_token('register') }}"><label for="email">Email</label><input id="email" type="email" name="email" value="{{ email }}" maxlength="180" autocomplete="email" required><button class="button primary full" type="submit">{{ 'registration.submit'|trans }} →</button></form><p class="login-help">{{ 'registration.demo_only'|trans }}</p>{% else %}<div class="flash warning">{{ 'registration.unavailable'|trans }}</div>{% endif %}
+{% endblock %}

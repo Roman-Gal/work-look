@@ -23,7 +23,10 @@ final class AgentRunner
             $run->addEvent($run->mode === 'demo' ? 'event.demo_started' : 'event.started');
             $this->em->flush();
             if ($run->mode === 'demo') { $this->demo($run); }
-            else { $this->live($run); }
+            else {
+                if (!$run->user->isVerified || !$run->user->liveAiEnabled) { throw new \RuntimeException('registration.demo_only'); }
+                $this->live($run);
+            }
             if ($run->status === 'running') { $run->status = 'completed'; }
         } catch (\Throwable $error) {
             $run->status = 'failed';

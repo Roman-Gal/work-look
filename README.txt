@@ -49,7 +49,8 @@ PDO SQLite, mbstring, XML/DOM/SimpleXML і залежності перевіря
 Збережіть згенероване значення як APP_SECRET у .env.local (цей файл ігнорується Git).
   php bin/console doctrine:migrations:migrate --no-interaction
   php bin/console app:user:create your@email.example
-Пароль вводиться приховано; публічної реєстрації немає.
+Пароль вводиться приховано; CLI створює довірений підтверджений акаунт.
+Email-реєстрація: /register; налаштування та правила — docs/email-registration.txt.
 
 Два окремі термінали PowerShell:
   C:\Php82\php.exe -S 127.0.0.1:8000 -t public tools/router.php
@@ -151,14 +152,15 @@ PDF, незмінність фактів, джерела/XXE, demo/idempotence �
 
 РОЗГОРТАННЯ MYDEVIL MD2
 
-Демостенд перевірено з PHP 8.4, новою SQLite-базою та Messenger Doctrine transport.
-PostgreSQL залишається окремим наступним кроком. Нижче — загальні команди розгортання;
+Локально — SQLite; для хоста підготовлено PostgreSQL і Messenger Doctrine transport.
+Нижче — загальні команди розгортання;
 фактичні каталоги й перевірки поточного стенда описано в docs/mydevil-deployment.txt.
 Docker і власний Node server для цього застосунку не потрібні.
 На хості скопіюйте .env.prod.example у .env.local; впишіть реальні secret, DB host
 і serverVersion із акаунта. APP_ENV=prod у .env.local обирає production і для вебзапитів.
-Міграція генерує SQL через DBAL для SQLite/PostgreSQL/MySQL. Фактично виконана й
-перевірена схема поки лише SQLite; переїзд даних — окрема перевірювана операція.
+Міграції генерують SQL через DBAL для SQLite/PostgreSQL/MySQL. Імпортер
+app:database:import-sqlite приймає консистентний знімок SQLite і порожню PostgreSQL,
+перевіряє кожне поле та кількість рядків, відновлює identity sequences; помилка дає rollback.
 
 На сервері використовувати PHP 8.4 і для вебсайту, і для CLI (php84 у MyDevil).
 Встановити Composer-залежності з --no-dev --optimize-autoloader у prod env.

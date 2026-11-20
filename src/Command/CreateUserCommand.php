@@ -10,7 +10,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
-#[AsCommand(name: 'app:user:create', description: 'Create a private account. No public registration.')]
+#[AsCommand(name: 'app:user:create', description: 'Create a trusted, verified account with live AI permission.')]
 final class CreateUserCommand extends Command
 {
     public function __construct(private EntityManagerInterface $em, private UserPasswordHasherInterface $hasher) { parent::__construct(); }
@@ -27,6 +27,7 @@ final class CreateUserCommand extends Command
         $password = $envName ? getenv($envName) : ($input->isInteractive() ? $io->askHidden('Пароль (щонайменше 14 символів)') : null);
         if (!is_string($password) || strlen($password) < 14 || strlen($password) > 128) { $io->error('Потрібен пароль довжиною 14–128 символів.'); return Command::INVALID; }
         $user = new User(); $user->email = $email; $user->password = $this->hasher->hashPassword($user, $password);
+        $user->isVerified = true; $user->liveAiEnabled = true;
         $this->em->persist($user); $this->em->flush(); $io->success('Приватний акаунт створено: '.$email);
         return Command::SUCCESS;
     }

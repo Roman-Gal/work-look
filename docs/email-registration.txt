@@ -1,0 +1,71 @@
+WorkLook — email registration and database operations
+2026-11-20
+
+Local development uses SQLite; hosting connection is selected by private DATABASE_URL.
+MySQL Workbench is a MySQL client, not a database server or a PostgreSQL client.
+The current deployment and evidence are recorded in mydevil-deployment.txt.
+
+Registration flow (UA / PL / EN):
+ GET /register -> POST email with CSRF -> generic confirmation -> SMTP email.
+ GET /verify-email is a landing page only. Password is chosen AFTER email ownership.
+ The emailed URL contains a random 256-bit token in the fragment, never in a query.
+ Stimulus copies the fragment into the form and removes it from browser history.
+ Without JavaScript, the email also includes a code that can be pasted manually.
+ POST /verify-email with CSRF, token and matching 15–128 character passwords -> login.
+ The database stores SHA-256(token), not the raw token; expiry one hour.
+ Conditional UPDATE atomically activates the account and clears the token. No auto-login.
+ Registering an already verified address never overwrites its password or permissions.
+ Existing operator-created accounts remain verified; new public users start in demo mode.
+ Dashboard AND worker check live-AI permission before spending the owner's API budget.
+ An operator can explicitly grant/revoke permission:
+   php84 bin/console app:user:live-ai EMAIL on --env=prod
+   php84 bin/console app:user:live-ai EMAIL off --env=prod
+ CLI app:user:create creates a trusted account with this permission enabled.
+
+Configuration in private .env.local (mode 0600, outside public/):
+ REGISTRATION_ENABLED=1
+ MAILER_FROM=noreply@your-domain
+ MAILER_DSN="smtp://ENCODED_EMAIL:ENCODED_PASSWORD@mail93.mydevil.net:587?require_tls=true"
+ DEFAULT_URI=https://your-domain
+ Percent-encode the SMTP username/password. TLS certificate checks remain enabled.
+ Outgoing emails use the configured DEFAULT_URI, never an incoming Host header.
+ Registration stays closed if disabled or if SMTP/sender/origin is not configured.
+ Mail is sent synchronously, without storing the raw verification link in Messenger.
+ On delivery failure, the token is invalidated and only a generic error is logged.
+ Null mailer is for tests/development only. Tests never send real messages.
+ Limits: 5 registration requests/IP/hour, 3/address/hour, 20 outgoing requests/day globally.
+ The same response is shown for existing, new and rate-limited addresses.
+ File-backed limiter/lock storage must be private and shared by all PHP workers.
+ Multi-host scaling needs shared Redis/database limiter and lock storage first.
+ Login throttling, session cookies, CSRF and owner checks also remain enabled.
+ Password recovery, MFA and public self-service live-AI billing are not implemented.
+
+SQLite -> PostgreSQL:
+ Stop all source writers, including the Messenger worker; temporarily block web writes.
+ Use SQLite backup API to create a consistent private snapshot. Keep it for rollback.
+ Migrate an EMPTY target PostgreSQL database with doctrine:migrations:migrate.
+ Point a candidate release at that target, then run:
+   php84 bin/console app:database:import-sqlite /absolute/private/snapshot.db --env=prod
+ Source is opened query-only. Target import is one transaction and refuses any existing rows.
+ App users, profiles, runs, jobs, matches and the queue are copied with original IDs.
+ JSON, booleans, timestamps, row counts and each field are compared without printing values.
+ Foreign keys are enforced; auto-generated identity sequences are set after the import.
+ Migration metadata belongs to the new target and is intentionally not copied from SQLite.
+ Validate schema, login, private profile, a real queued demo run, and email confirmation.
+ Switch current release only when these checks pass; preserve old code/config/snapshot.
+ Do not upload local private databases while the user's previous restriction is in force.
+
+Hosting backups:
+ tools/mydevil/database-backup.sh uses a private shared/.pgpass (0600).
+ It writes PostgreSQL custom dumps in shared/backups (0700), validates the archive list,
+ and retains 14 days. Keep a separately controlled off-host copy for disaster recovery.
+ A successful backup/archive check does not prove a restore; perform restore drills too.
+ Database contents, CV facts, session storage and backups are not application-encrypted.
+ A compromised hosting account can read them. Separate OS accounts/hosts provide stronger
+ isolation between independent bots/apps than directories under a single shared account.
+
+References:
+ https://symfony.com/doc/7.4/mailer.html
+ https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html
+ https://pomoc.mydevil.net/PostgreSQL/
+ https://pomoc.mydevil.net/Poczta/

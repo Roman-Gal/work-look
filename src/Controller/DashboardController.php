@@ -21,9 +21,12 @@ final class DashboardController extends AbstractController
     {
         /** @var User $user */ $user = $this->getUser();
         $profile = $this->em->getRepository(Profile::class)->findOneBy(['user' => $user]);
-        $form = $this->createForm(RunType::class, ['sources' => ['solidjobs'], 'minimumScore' => 65, 'mode' => $ai->isConfigured() ? 'live' : 'demo']); $form->handleRequest($request);
+        $form = $this->createForm(RunType::class, ['sources' => ['solidjobs'], 'minimumScore' => 65, 'mode' => $ai->isConfigured() && $user->liveAiEnabled ? 'live' : 'demo']); $form->handleRequest($request);
         if ($form->isSubmitted() && $form->isValid()) {
             $data = $form->getData(); $lock = $locks->createLock('start_run_user_'.$user->id, 30);
+            if ($data['mode'] === 'live' && !$user->liveAiEnabled) {
+                $this->addFlash('warning', 'registration.demo_only'); return $this->redirectToRoute('app_dashboard');
+            }
             if (!$lock->acquire()) { $this->addFlash('warning', 'flash.starting'); return $this->redirectToRoute('app_dashboard'); }
             try {
                 $active = $this->em->getRepository(AgentRun::class)->findOneBy(['user' => $user, 'status' => ['queued', 'running']]);

@@ -11,6 +11,7 @@ security:
         main:
             lazy: true
             provider: app_users
+            user_checker: App\Security\VerifiedUserChecker
             form_login:
                 login_path: app_login
                 check_path: app_login
@@ -25,6 +26,7 @@ security:
         - { path: ^/(telegram/webhook|translator/telegram/webhook)$, roles: PUBLIC_ACCESS, methods: [POST] }
         - { path: ^/language/(uk|pl|en)$, roles: PUBLIC_ACCESS }
         - { path: ^/login$, roles: PUBLIC_ACCESS }
+        - { path: ^/(register|verify-email)$, roles: PUBLIC_ACCESS }
         - { path: ^/healthz$, roles: PUBLIC_ACCESS }
         - { path: ^/, roles: ROLE_USER }
 when@test:
