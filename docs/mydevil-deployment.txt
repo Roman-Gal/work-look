@@ -15,11 +15,14 @@ The only saved sample search is explicitly fictional; there are no canonical CV 
 Deployed applications (relative to the hosting account's home):
 
 WorkLook:
- apps/work-look/releases/b7be3a1
- Code revision: b7be3a183caffb62b7663d135ad049e62c43a5ea
+ apps/work-look/releases/c4c7125
+ Code revision: c4c71253fe9081fea27a1ff4e0c46eaee8884082
  apps/work-look/current -> selected release
  apps/work-look/shared/.env.local -> server configuration, mode 0600
- apps/work-look/shared/var/ -> private cache, logs and new SQLite database
+ apps/work-look/shared/var/log/ -> private shared logs
+ apps/work-look/current/var/ -> private per-release cache (0700)
+ PostgreSQL 16.16: p1091_worklook, role p1091_worklook, pgsql93.mydevil.net
+ Previous SQLite is retained only as a private rollback artifact, no longer active.
  Domain public_html -> apps/work-look/current/public only
  PHP 8.4.28; Composer --no-dev; compiled AssetMapper assets; APP_ENV=prod/APP_DEBUG=0.
  The initial default index page was preserved in public_html.before-worklook outside
@@ -72,12 +75,12 @@ Verified:
  - /.env.local (404), /.git/config (403), /composer.json (404), database URL (404).
  - Both bot webhook routes return 503 without credentials/configuration.
  - No previous user data imported; both bot stores have zero user-data rows.
- - Local WorkLook suite: 23 tests, 163 assertions.
+ - Local WorkLook suite: 32 tests, 238 assertions, including email registration security.
  - FreeBSD planner suite: 67 tests, all passed; translator suite: 75 tests, all passed.
  - Server Composer audit: zero reported advisories or abandoned production packages.
  These are bounded checks, not a claim of a completed independent security audit.
 
-Activation is a separate authorized step:
+Bot/API activation is a separate authorized step:
  - Choose/approve the actual external service account and key, and approve secret/data
    transfer. Populate private server .env files; never commit or expose credentials.
  - Explicitly decide whether to migrate current databases or start clean. Before an
@@ -87,7 +90,51 @@ Activation is a separate authorized step:
    per database, and register webhooks with drop_pending_updates=false.
  - Verify getMe/getWebhookInfo and health endpoints, without unsolicited test messages.
  - Never run the old planner reminder worker concurrently with the migrated instance.
- - Temporary deployment SSH access is to be removed after this deployment's checks.
+ - Temporary deployment SSH access was removed after the checks. A fresh key-only
+   connection was denied, then local private/public key files were deleted.
+   The owner's existing interactive SSH session/password were not changed.
+
+
+PostgreSQL and email registration update:
+ - All existing SERVER demo data moved from SQLite using a consistent backup snapshot.
+ - Every source field and row count was checked in one transaction, foreign keys were
+   enforced and identity sequences repaired. Imported: 1 account, 1 run, 1 job, 1 match;
+   profile and queue were empty. No local personal database was uploaded.
+ - Dedicated DB ownership confirmed; PUBLIC CONNECT and public-schema rights revoked.
+   Role has no superuser, createdb, createrole, replication or bypassrls privileges.
+ - The provider does not support PostgreSQL TLS here. The host route to the database
+   address was explicitly verified as lo0 on s93 (same-server loopback, no external hop).
+   Remote desktop DB access must use SSH tunneling, not a public exposed DB port.
+ - Initial SQLite snapshot and previous env/cron are in private shared/backups/
+   before-postgres-20261120T185619Z/ (0700; snapshot/env files 0600).
+ - A native pg_dump backup runs daily at 03:17 server time, keeps 14 days of dated dumps,
+   and validates pg_restore --list. Restore into a separate DB and off-host copies are
+   still operational follow-ups; archive validation alone is not a restore drill.
+ - SMTP sender: noreply-worklook@rh-additional.usermd.net, mail93.mydevil.net:587,
+   STARTTLS required, certificate verification enabled. Password generated on the host;
+   no existing user's mailbox password was read/reset/transferred.
+ - /register and /verify-email are live in UA, PL, EN. Email ownership comes first;
+   password set afterwards. Hashed, single-use, one-hour token; CSRF and mail limits.
+ - Public signups have demo access. Both HTTP controller and background worker require
+   explicit permission to use the owner's AI budget; API key is still empty on host.
+ - Actual SMTP delivery to the newly created application mailbox was retrieved over
+   verified IMAP TLS, then confirmed through HTTPS and password login to PostgreSQL.
+   A real queued demo completed via cron worker. Synthetic test users/runs were removed.
+   External recipient inbox placement/spam filtering is not proven by this self-test.
+ - Browser verified all three languages and the fragment-to-form code handoff; raw
+   token disappears from the address bar. No raw token in the server URL/access log.
+ - HTTPS/CSRF/private-file probes passed. Temporary authenticated cache-invalidation
+   endpoint was removed immediately; final scan confirmed no diagnostic endpoint remains.
+ - Native PHP domain restart via devil www restart is unsupported (that command is for
+   Node/Python/Ruby). On symlink release changes, invalidate old/new index.php OPcache
+   entries in the web SAPI using a protected one-use operation, then remove it. CLI
+   OPcache is separate. Validate the actual new route/header before calling deploy done.
+ - Code/public directories need 0755 and public asset files 0644; var/private state
+   must remain 0700, secrets 0600. A restrictive extraction umask also affects AssetMapper
+   output and FreeBSD symlink modes, so check public resource readability after deploy.
+ - Email configuration/flow/operator commands and limitations: email-registration.txt.
+ - The website has baseline safeguards, not a completed independent penetration test.
+   Apps/bots share one OS account: compromising that account can expose all its files.
 
 Authoritative references:
  https://pomoc.mydevil.net/Strona_WWW/
@@ -97,3 +144,7 @@ Authoritative references:
  https://pomoc.mydevil.net/Rezerwacja_portow/
  https://pomoc.mydevil.net/Cron/
  https://developers.deepl.com/api-reference/translate/request-translation
+ https://pomoc.mydevil.net/PostgreSQL/
+ https://pomoc.mydevil.net/Poczta/
+ https://symfony.com/doc/7.4/mailer.html
+ https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html
