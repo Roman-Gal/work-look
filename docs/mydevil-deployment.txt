@@ -27,6 +27,9 @@ Active directories, relative to /usr/home/RH-additional:
  Every app has a private shared/.env[.local] and its own PostgreSQL database role.
  WorkLook DB: p1091_worklook. Planner DB: p1091_planner. Translator DB: p1091_translator.
  Real secrets are only in private files (0600), outside public/ and outside Git.
+ Temporary migration SSH access was revoked after final checks; a fresh key-only
+ connection was denied and both local key files deleted. The owner password/session
+ were not changed.
  New passwords were generated on the host; transferred Telegram/webhook/DeepL secrets
  came from the user's explicitly approved inputs. GitHub personal credentials and
  SSH private keys were not installed on the host.
