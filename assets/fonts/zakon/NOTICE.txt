@@ -1,0 +1,23 @@
+Zakon Text (font files use the internal family name Zakon), version 1.000.
+
+Copyright (c) 2026 Oleksii Chekal, Henadii Zarechniuk, Dmytro Rastvortsev, Andrij Shevchenko.
+Original metadata: © 2026 Олексій Чекаль, Геннадій Заречнюк, Дмитро Растворцев, Андрій Шевченко.
+
+Official project and usage statement: https://mincult.gov.ua/zakon/
+The Ministry describes Zakon Text as freely usable by an unlimited circle of users.
+This does not apply to the separate Zakon Decor / Zakon Letterpress families.
+We preserve the original TTF files and metadata without conversion or modification.
+This notice records provenance; it does not replace or invent the author's licence.
+
+Official download folder linked from the project page:
+https://drive.google.com/drive/folders/1MbhEkXEFflNDNbmHBLM3-5fFJYwXYHgu
+TTF subfolder:
+https://drive.google.com/drive/folders/1-scrbg2BZxPtrG5IrChgwWU0N7AZnf8R
+Downloaded: 2026-11-20.
+Font metadata permits editable document embedding (OS/2 fsType = 8).
+
+Original files (SHA-256):
+Zakon-Bold.ttf  4535fad26b61bf0176171ce3d9cb76a45cf1695368841ad339e5b30a1418ca1b
+Zakon-BoldItalic.ttf  8919c26e9a115f30e3f143260154c743be233e9d7e839513c6b7a6e0dd6254f2
+Zakon-Italic.ttf  f181fbf221754c45149da82b38ebb066332b536c0127608327162385bd1016d6
+Zakon-Regular.ttf  297ea4e0e8dd6a3396d2c47b44bb511e17ffb2d4f2304cd7cce589c288f0ff8d

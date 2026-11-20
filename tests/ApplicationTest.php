@@ -159,6 +159,8 @@ final class ApplicationTest extends WebTestCase
         $this->client->loginUser($this->owner); $this->client->request('GET', '/matches/'.$match->id.'/cv.pdf');
         self::assertResponseIsSuccessful(); self::assertResponseHeaderSame('Content-Type', 'application/pdf');
         self::assertStringStartsWith('%PDF-', $this->client->getResponse()->getContent());
+        self::assertStringContainsString('Zakon-Regular', $this->client->getResponse()->getContent());
+        self::assertStringContainsString('Zakon-Bold', $this->client->getResponse()->getContent());
     }
     public function testCancelledQueuedRunDoesNotCallModel(): void
     {

@@ -2,16 +2,15 @@
 namespace App\Controller;
 
 use App\Entity\JobMatch;
-use App\Service\CanonicalCv;
+use App\Service\{CanonicalCv, CvPdfRenderer};
 use Doctrine\ORM\EntityManagerInterface;
-use Dompdf\{Dompdf, Options};
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\{Request, Response};
 use Symfony\Component\Routing\Attribute\Route;
 
 final class MatchController extends AbstractController
 {
-    public function __construct(private EntityManagerInterface $em, private CanonicalCv $cv) {}
+    public function __construct(private EntityManagerInterface $em, private CanonicalCv $cv, private CvPdfRenderer $pdfRenderer) {}
     private function owned(int $id): JobMatch
     {
         return $this->em->createQueryBuilder()->select('m', 'r', 'j')->from(JobMatch::class, 'm')
@@ -40,11 +39,6 @@ final class MatchController extends AbstractController
         $match = $this->owned($id);
         if (!$match->selectedFactIds) { throw $this->createNotFoundException(); }
         $facts = $this->cv->selectFacts($match->run->profileSnapshot, $match->selectedFactIds);
-        $options = new Options(['isRemoteEnabled' => false, 'isPhpEnabled' => false, 'isJavascriptEnabled' => false,
-            'defaultFont' => 'DejaVu Sans', 'chroot' => $this->getParameter('kernel.project_dir').'/var']);
-        $pdf = new Dompdf($options);
-        $pdf->loadHtml($this->renderView('cv/document.html.twig', ['match' => $match, 'profile' => $match->run->profileSnapshot, 'facts' => $facts]), 'UTF-8');
-        $pdf->setPaper('A4'); $pdf->render();
-        return new Response($pdf->output(), 200, ['Content-Type' => 'application/pdf', 'Content-Disposition' => 'attachment; filename="work-look-cv-'.$id.'.pdf"', 'Cache-Control' => 'private, no-store']);
+        return new Response($this->pdfRenderer->render($match, $facts), 200, ['Content-Type' => 'application/pdf', 'Content-Disposition' => 'attachment; filename="work-look-cv-'.$id.'.pdf"', 'Cache-Control' => 'private, no-store']);
     }
 }

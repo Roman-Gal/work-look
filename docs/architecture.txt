@@ -38,6 +38,9 @@ user_id не передається в model arguments. Ліміти забез�
  src/Entity/ — Doctrine-моделі. migrations/ — переносима початкова DBAL-схема.
  src/Controller/ — приватні сторінки, profile forms, CV PDF і статуси.
  src/Service/CanonicalCv.php — незалежна валідація фактів.
+ src/Service/CvPdfRenderer.php — локальні TTF Zakon Text, вбудовані в PDF; font cache
+ у приватному var/pdf-fonts/, remote/JS/PHP вимкнено, chroot лише var і каталог шрифту.
+ assets/styles/fonts.css — чотири @font-face; assets/fonts/zakon/NOTICE.txt — походження.
  src/Message/, src/MessageHandler/ — фоновий вхід у runner.
  src/Command/ — приватне створення користувача, source check.
  src/EventSubscriber/ — nonce CSP та захисні заголовки.
