@@ -1,0 +1,106 @@
+{
+  "source": "justjoin-detail",
+  "url": "https://justjoin.it/api/candidate-api/offers/strada-sp-z-o-o--specjalista-specjalistka-ds-wsparcia-it-mierzecice-support",
+  "method": "GET",
+  "checked_at_utc": "2026-11-20T11:45:40.939073+00:00",
+  "user_agent": "JOBFIND-Research/0.1 (one-shot endpoint verification)",
+  "curl_exit_code": 0,
+  "http_code": 200,
+  "content_type": "application/json; charset=utf-8",
+  "size_download": 4497,
+  "time_total": 0.121526,
+  "url_effective": "https://justjoin.it/api/candidate-api/offers/strada-sp-z-o-o--specjalista-specjalistka-ds-wsparcia-it-mierzecice-support",
+  "selected_headers": {},
+  "body_bytes": 10221,
+  "body_sha256": "c71c7cc7ba85841b4875c0d605bd796c6748dca6fae1d92c9ba3bf8fca8c0a1b",
+  "payload_kind": "json",
+  "shape": {
+    "id": "str",
+    "slug": "str",
+    "title": "str",
+    "experienceLevel": "str",
+    "category": {
+      "key": "str",
+      "parentKey": "NoneType"
+    },
+    "companyName": "str",
+    "companyUrl": "str",
+    "body": "str",
+    "locationId": "str",
+    "city": "str",
+    "street": "str",
+    "countryCode": "str",
+    "latitude": "float",
+    "longitude": "float",
+    "companySize": "str",
+    "informationClause": "str",
+    "futureConsent": "str",
+    "customConsent": "NoneType",
+    "companyLogoUrl": "str",
+    "employmentTypes": {
+      "type": "array",
+      "length": 10,
+      "first_item_shape": {
+        "from": "float",
+        "fromPerUnit": "float",
+        "to": "float",
+        "toPerUnit": "float",
+        "currency": "str",
+        "currencySource": "str",
+        "type": "str",
+        "unit": "str",
+        "gross": "bool"
+      }
+    },
+    "workplaceType": "str",
+    "requiredSkills": {
+      "type": "array",
+      "length": 9,
+      "first_item_shape": {
+        "skillId": "str",
+        "name": "str",
+        "level": "int",
+        "group": "NoneType"
+      }
+    },
+    "niceToHaveSkills": {
+      "type": "array",
+      "length": 0,
+      "first_item_shape": null
+    },
+    "workingTime": "str",
+    "applyUrl": "NoneType",
+    "publishedAt": "str",
+    "companyProfileSlug": "str",
+    "companyProfileCoverPhotoUrl": "str",
+    "companyProfileShortDescription": "str",
+    "isOpenToHireUkrainians": "bool",
+    "locations": {
+      "type": "array",
+      "length": 1,
+      "first_item_shape": {
+        "city": "str",
+        "street": "str",
+        "latitude": "float",
+        "longitude": "float",
+        "slug": "str"
+      }
+    },
+    "videoUrl": "NoneType",
+    "bannerUrl": "NoneType",
+    "isActive": "bool",
+    "expiredAt": "str",
+    "languages": {
+      "type": "array",
+      "length": 0,
+      "first_item_shape": null
+    },
+    "coverImage": "str",
+    "appliedAt": "NoneType",
+    "hybridWorkSchedule": "NoneType",
+    "url": "str",
+    "canonicalSlug": "str"
+  },
+  "scalar_metadata": {},
+  "structured_success": true
+}

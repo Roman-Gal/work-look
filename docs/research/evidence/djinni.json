@@ -1,0 +1,32 @@
+{
+  "source": "djinni",
+  "url": "https://djinni.co/jobs/rss/?primary_keyword=PHP",
+  "method": "GET",
+  "checked_at_utc": "2026-11-20T11:43:25.319036+00:00",
+  "user_agent": "JOBFIND-Research/0.1 (one-shot endpoint verification)",
+  "curl_exit_code": 0,
+  "http_code": 200,
+  "content_type": "application/rss+xml; charset=utf-8",
+  "size_download": 29146,
+  "time_total": 0.307096,
+  "url_effective": "https://djinni.co/jobs/rss/?primary_keyword=PHP",
+  "selected_headers": {
+    "last-modified": "Wed, 18 Nov 2026 13:14:49 GMT"
+  },
+  "body_bytes": 120609,
+  "body_sha256": "d42a6e891d171194fbe3d635656487d8f791983e0bd72da1844bba2149d0c63c",
+  "payload_kind": "rss",
+  "xml_root": "rss",
+  "item_count": 23,
+  "first_item_fields": [
+    "title",
+    "link",
+    "description",
+    "pubDate",
+    "guid",
+    "category",
+    "category"
+  ],
+  "description_chars": 2447,
+  "structured_success": true
+}

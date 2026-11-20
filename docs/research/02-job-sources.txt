@@ -1,0 +1,214 @@
+Джерела вакансій: Польща та Україна
+Перевірено: 2026-11-20. Числа нижче — спостереження одного запуску, не гарантії сервісу.
+Це перелік релевантних платформ, а не виміряний рейтинг їхньої популярності.
+Оновлення MVP: SOLID.Jobs + DOU RSS + Djinni RSS реалізовані в ../../src/Source/.
+Решта платформ нижче — дослідження, а не ввімкнені адаптери.
+Поточний код використовує pageSize=10, максимум 4 запити на ручний агентський запуск
+і годинний cache; автоматичного щогодинного refresh немає.
+
+Позначення:
+PUBLIC — документований API для зовнішніх інтеграцій або опублікований самим сайтом RSS.
+INTERNAL — HTTP endpoint доступний, але підтримуваний публічний контракт не підтверджено.
+PARTIAL — перевірено лише частину шляху list → detail; FAILED — конкретна перевірка не пройшла.
+UNKNOWN — під час цього дослідження придатного документованого job-read API не підтверджено.
+UNKNOWN не означає, що API не існує. API для публікації вакансій роботодавцем не вважаємо job-read API.
+
+1. Польські платформи
+
+Платформа       Корисність для проєкту               Поточний висновок
+SOLID.Jobs      IT та інші спеціальності             PUBLIC JSON API + RSS; перший адаптер.
+JustJoinIT      IT, технології, рівні досвіду         INTERNAL JSON list/detail; пагінація не готова.
+NoFluffJobs     IT та інші категорії, зарплати        INTERNAL: detail GET працює; search GET не працює.
+Pracuj.pl       Широкий ринок, офісні/гібридні ролі   UNKNOWN для зовнішнього читання вакансій.
+theprotocol.it  IT, стек, контракти й локації         UNKNOWN; не прирівнювати HTML/Next.js до API.
+Bulldogjob      IT, навички, зарплати й географія     UNKNOWN; адаптер поки не реалізовувати.
+RocketJobs      Поза IT та суміжні спеціальності     UNKNOWN; схожість із JJIT не доводить спільний API.
+
+Першоджерела для охоплення платформ:
+[Pracuj](https://www.pracuj.pl/), [theprotocol](https://theprotocol.it/),
+[Bulldogjob](https://bulldogjob.pl/companies/jobs), [RocketJobs](https://rocketjobs.pl/).
+Для цих чотирьох сайтів перевірено публічні сторінки, але не підтверджено API-контракт.
+Далі: отримати офіційний feed/партнерський доступ або окремо дослідити frontend network.
+В поточній фазі HTML-парсинг не є автоматичним fallback.
+
+1.1. SOLID.Jobs — рекомендований польський старт
+
+GET https://solid.jobs/public-api/offers/IT?campaign=jobfind-local-research&pageSize=1&pageIndex=0
+Без ключа. campaign — власний ідентифікатор інтеграції, не секрет.
+Відповідь: 200 JSON, jobs[1]; totalCount на момент запиту — 1414.
+pageIndex=1 також перевірено: інший jobOfferKey. Пагінація починається з 0.
+Поля: jobs[].jobOfferKey, title, company, url, description, salary, secondarySalary?,
+locations, isRemote, isHybrid, skills, languages, experienceLevel, validFrom/validTo/updatedAt.
+Перевірка одного запису не гарантує наявності всіх optional-полів у кожної вакансії.
+
+Документовані query-параметри: pageIndex, pageSize, sortActive, sortDirection,
+search.cities, search.searchTerm, search.experiences, search.minimumSalary.
+pageSize: до 500 за документацією; для нашого старту пропоную 20–50.
+Запит із search.searchTerm=PHP повернув 200 і один запис; повноту/точність пошуку
+ще потрібно перевірити на окремій вибірці. Заголовок версії: X-Api-Version: 1.0.
+Опублікований ліміт: 300 запитів/хв/IP, cache до години. Наш стартовий refresh — 1 раз/годину.
+Джерела: [API](https://solid.jobs/api-ofert-pracy),
+[офіційний клієнт і параметри](https://github.com/solid-company/solid-jobs-client).
+Локальний доказ: evidence/solidjobs.json, solidjobs-page1.json, solidjobs-php.json.
+
+Альтернатива через RSS:
+GET https://solid.jobs/rss/job-offers/subcategory/PHP
+200 RSS, перевірено; тематичні feeds публікуються на [RSS-сторінці](https://solid.jobs/about/rss).
+Не вмикати API та RSS як два незалежні потоки без дедуплікації.
+
+1.2. JustJoinIT — дослідницький INTERNAL адаптер
+
+GET https://justjoin.it/api/candidate-api/offers?page=1&perPage=1
+GET https://justjoin.it/api/candidate-api/offers/{slug}
+Обидва повернули 200 JSON без авторизації. Вхідний slug брати з list, не конструювати з title.
+List: data[], meta.from, meta.totalItems, meta.prev/next із cursor та itemsCount.
+Запити perPage=1 і limit=1 фактично повернули по 10 записів. Ці параметри не вважати робочими.
+meta.totalItems=10000 — значення відповіді, не доказ повного охоплення board.
+Поточний спосіб передавання next cursor і пошукових фільтрів ще НЕ встановлено.
+Не писати цикл page++ без перевірки: це може повторювати одну сторінку.
+
+List ID: guid; detail ID: id. Окремо зберігати slug і встановити відповідність цих ID.
+List: title, companyName, workplaceType, experienceLevel, requiredSkills, employmentTypes,
+locations, publishedAt/expiredAt. Detail: body із текстом опису, url, canonicalSlug, isActive.
+employmentTypes містить валюту, unit, gross, from/to та fromPerUnit/toPerUnit;
+не змішувати конвертовані зарплати та різні періоди як різні контракти.
+Доказ: evidence/justjoin.json, justjoin-limit.json, justjoin-detail.json.
+Першоджерело: [сайт](https://justjoin.it/), [умови](https://justjoin.it/terms-and-privacy-policies).
+
+Опублікований robots.txt містить Disallow: /api/ — перевірено окремим GET.
+Це застереження проти трактування внутрішнього маршруту як відкритого feed для збору.
+Регулярний експериментальний адаптер за замовчуванням вимкнений до з'ясування підтримуваного доступу.
+Посилання: [robots.txt](https://justjoin.it/robots.txt).
+
+1.3. NoFluffJobs — окремо list, search і detail
+
+GET https://nofluffjobs.com/api/posting
+Повернув HTTP 200 application/json, але тіло не дочитано навіть при обмеженні 20 MB:
+curl exit 63. JSON не валідовано; повного shape немає. Не завантажувати цей feed при кожному кліку UI.
+
+GET https://nofluffjobs.com/api/search/posting
+405, заголовок Allow: POST. Це НЕ робочий GET-пошук.
+POST-пошук може бути read-only за призначенням, але його payload/параметри тут не перевірялися.
+Не переносити вигадану схему POST у робочий адаптер.
+
+GET https://nofluffjobs.com/api/posting/{slug}
+Перевірений slug: software-engineer-big-data-adform-warszawa-1.
+200 JSON; поля title, company.name, details.description, requirements.musts/nices,
+requirements.description, specs.dailyTasks, essentials.originalSalary,
+location.places[].geoLocation, expiresAt, status, postingUrl/defaultUrl.
+Повний опис може складатися з кількох секцій, не лише details.description.
+Висновок: деталі читати технічно можливо, але завершеного пошуку зараз немає.
+Доказ: evidence/nofluff-list.json, nofluff-search-get.json, nofluff-detail.json.
+[Сайт](https://nofluffjobs.com/), [robots.txt](https://nofluffjobs.com/robots.txt) також містить Disallow: /api/.
+Статус для MVP — експериментальний, вимкнений за замовчуванням.
+
+2. Українські платформи
+
+2.1. DOU — PUBLIC RSS, перший український адаптер
+
+GET https://jobs.dou.ua/vacancies/feeds/?category=PHP
+200 application/rss+xml, 25 item у перевіреній відповіді.
+Поля item: title, link, guid, pubDate, description; description містить HTML-фрагмент.
+RSS-посилання опубліковане на [сторінці вакансій](https://jobs.dou.ua/vacancies/).
+category=PHP перевірено як запит; інші комбінації фільтрів брати з RSS-посилання після їх вибору на сайті.
+Окремого salary/company/work-mode JSON тут не підтверджено: зберігати unknown/null,
+або робити обґрунтоване витягування з наданого feed-опису з посиланням на фрагмент.
+Вибірка показує непорожній description; повноту вимог потрібно перевіряти для кожної вакансії.
+RSS — стрічка нових записів, не гарантований повний архів і не перевірка актуальності старих вакансій.
+Cache-Control у відповіді: max-age=600. Пропонований refresh для MVP: раз/годину.
+Доказ: evidence/dou.json.
+
+2.2. Djinni — PUBLIC RSS; JSON API для пошуку не підтверджено
+
+GET https://djinni.co/jobs/rss/?primary_keyword=PHP
+200 application/rss+xml, 23 item. Поля: title, link, guid, pubDate, description, повторювані category.
+RSS-посилання є на [офіційній сторінці вакансій](https://djinni.co/jobs/).
+Це шлях без HTML-скрапера; JSON API для цього не потрібний.
+Не припускати, що всі профільні фільтри чи вакансії після логіна доступні у feed.
+Не ототожнювати remote з дозволом працювати з Польщі: країни/регіони перевіряти в описі.
+Параметри зарплати, контракту й мови можуть бути неструктурованими або відсутніми.
+Пропонований refresh: раз/годину; точного публічного API rate limit не встановлено.
+Доказ: evidence/djinni.json.
+
+2.3. robota.ua — INTERNAL, PARTIAL
+
+GET https://api.robota.ua/vacancy/search?keyWords=php&count=1&page=0
+200 JSON, documents[1], count=1, total=33 у перевіреній відповіді.
+Форма: documents[], total, start, count, errorMessage.
+Поля: id, name, companyName, notebookId, salaryFrom/To, salaryComment, cityName,
+latitude/longitude, shortDescription, date. Валюта та gross/net у цьому sample не підтверджені.
+Фактично перевірено лише page=0 і count=1; наступні сторінки/семантика фільтрів потребують перевірки.
+
+GET https://api.robota.ua/vacancy?id=11386804
+403 у цьому середовищі. Повного опису не отримано; не обходили блокування.
+Не генерувати CV лише за shortDescription. До вирішення detail доступу — тільки discovery-записи
+з content_completeness=summary і статусом NeedsDetails.
+Доказ: evidence/robota.json, robota-detail.json. [Першоджерело](https://robota.ua/).
+Підтримувана публічна документація для цього read endpoint не знайдена.
+
+2.4. Work.ua — важливе джерело, UNKNOWN для API-first реалізації
+
+Під час дослідження не підтверджено документований зовнішній API, який дозволяє шукати
+всі вакансії. Не вигадувати маршрути /api/jobs або developers.work.ua у коді.
+Невдалі відкриття можливих API-піддоменів не доводять відсутності партнерської інтеграції.
+План: уточнити наявність feed/job-search API через офіційний канал співпраці;
+за потреби до цього — ручний імпорт тексту вакансії, без скрапера.
+Жодних звернень платформі не надсилали.
+[Work.ua](https://www.work.ua/about-us/), [контакти](https://www.work.ua/about-us/contact/).
+
+3. Офіційні API як додаткове покриття Польщі/remote
+
+Вони не замінюють усі названі boards. ATS працюють по окремих роботодавцях, а не по всьому ринку.
+
+Adzuna: документований GET, потрібні app_id + app_key. Ключів немає, запит не виконувався.
+Шаблон: https://api.adzuna.com/v1/api/jobs/{country}/search/{page}
+Для pl спочатку підтвердити доступність країни/умови конкретного акаунта; не вважати покриття перевіреним.
+Відповідь може містити скорочений опис та прогноз зарплати; не подавати прогноз як оголошену вилку.
+[Overview](https://developer.adzuna.com/overview), [Search](https://developer.adzuna.com/docs/search).
+
+Jooble: офіційний API з ключем, який треба отримати окремо; не тестувався.
+Метод і тіло запиту звірити з актуальним прикладом у документації перед реалізацією.
+Не підміняти відсутні прямі API порталів твердженням про гарантовану повноту агрегатора.
+[Jooble REST API](https://jooble.org/api/about).
+
+Greenhouse: GET https://boards-api.greenhouse.io/v1/boards/{board_token}/jobs
+Перевірено на stripe: 200 JSON jobs[]. Без ключа для читання.
+Параметр content=true документований; пробна відповідь із ним перевищила 5 MB,
+тому для збереженого успішного evidence використано список без описів.
+Деталі: GET .../jobs/{id}; цей окремий маршрут ще не тестували.
+[Job Board API](https://developers.greenhouse.io/job-board.html). Доказ: evidence/greenhouse.json.
+
+Lever: GET https://api.lever.co/v0/postings/{site}?mode=json&limit=1
+Перевірено на spotify: 200, масив з одним записом. Поля id, text, categories,
+descriptionPlain, lists, hostedUrl/applyUrl, workplaceType. US/EU hosting треба вибирати за board.
+Це feed конкретної компанії, а не глобальний пошук. [Офіційна документація](https://github.com/lever/postings-api).
+Доказ: evidence/lever.json.
+
+Ashby: GET https://api.ashbyhq.com/posting-api/job-board/{board}?includeCompensation=true
+Перевірено на ashby: 200, jobs[79]. Поля id, title, jobUrl, descriptionPlain,
+location/secondaryLocations, isRemote, workplaceType, compensation?, publishedAt.
+Не показувати unlisted jobs. Країни найму/валюти встановлювати з даних, не з домену ATS.
+[Public Job Postings API](https://developers.ashbyhq.com/docs/public-job-posting-api).
+Доказ: evidence/ashby.json.
+
+Remotive: GET https://remotive.com/api/remote-jobs?search=php&limit=1
+200 JSON; попри limit=1 отримано jobs[15] — фільтри/ліміт у цьому запуску не підтверджені.
+Поля id, url, title, company_name, candidate_required_location, salary, description.
+Зарплата текстова. Дані API мають затримку; документація рекомендує максимум 4 запити/день.
+Потрібне посилання на Remotive; перед SaaS переглянути обмеження щодо показу за реєстрацією.
+[Умови та API](https://github.com/remotive-com/remote-jobs-api). Доказ: evidence/remotive.json.
+
+Arbeitnow: GET https://www.arbeitnow.com/api/job-board-api?page=1
+200 JSON, data[300], links.next вказує page=2. Наступну сторінку тут не запитували.
+Поля slug, company_name, title, description, remote, location, url, created_at.
+Додаткове європейське джерело з фокусом на Німеччину, не базовий польський board.
+Потрібно фільтрувати країну та придатність remote; remote=true цього не встановлює.
+[API](https://www.arbeitnow.com/blog/job-board-api). Доказ: evidence/arbeitnow.json.
+
+4. Порядок підключення
+
+Перший прохід: SOLID.Jobs JSON → DOU RSS → Djinni RSS.
+Другий: цільові роботодавці через Greenhouse/Lever/Ashby; за потреби Adzuna/Jooble з ключами.
+Експериментальна гілка: JustJoinIT пагінація й підтримуваний доступ; NoFluffJobs пошуковий payload;
+robota.ua повний опис. Pracuj/theprotocol/Bulldogjob/RocketJobs/Work.ua — після підтвердження feed/API.
+Такий старт дає справжні вакансії без написання скраперів і без вигаданих API-контрактів.

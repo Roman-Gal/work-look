@@ -1,0 +1,47 @@
+{
+  "source": "remotive",
+  "url": "https://remotive.com/api/remote-jobs?search=php&limit=1",
+  "method": "GET",
+  "checked_at_utc": "2026-11-20T11:43:25.463884+00:00",
+  "user_agent": "JOBFIND-Research/0.1 (one-shot endpoint verification)",
+  "curl_exit_code": 0,
+  "http_code": 200,
+  "content_type": "application/json; charset=utf-8",
+  "size_download": 32459,
+  "time_total": 0.204584,
+  "url_effective": "https://remotive.com/api/remote-jobs?search=php&limit=1",
+  "selected_headers": {
+    "last-modified": "Thu, 19 Nov 2026 16:13:14 GMT",
+    "cache-control": "no-store"
+  },
+  "body_bytes": 244451,
+  "body_sha256": "607988708d9af24c9ea0fe49f135b6c3fc92ba2d6b3eb18bae54c284a0304ca1",
+  "payload_kind": "json",
+  "shape": {
+    "00-warning": "str",
+    "0-legal-notice": "str",
+    "job-count": "int",
+    "total-job-count": "int",
+    "jobs": {
+      "type": "array",
+      "length": 15,
+      "first_item_shape": {
+        "id": "int",
+        "url": "str",
+        "title": "str",
+        "company_name": "str",
+        "company_logo": "str",
+        "category": "str",
+        "tags": "list",
+        "job_type": "str",
+        "publication_date": "str",
+        "candidate_required_location": "str",
+        "salary": "str",
+        "description": "str",
+        "company_logo_url": "str"
+      }
+    }
+  },
+  "scalar_metadata": {},
+  "structured_success": true
+}

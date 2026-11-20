@@ -1,0 +1,9 @@
+<nav class="language-switcher" aria-label="{{ 'language.label'|trans }}">
+    {% for locale, label in {uk: 'Українська', pl: 'Polski', en: 'English'} %}
+        <form action="{{ path('app_language', {locale: locale}) }}" method="post" data-turbo="false">
+            <input type="hidden" name="_token" value="{{ csrf_token('language') }}">
+            <input type="hidden" name="return_to" value="{{ app.request.pathInfo }}">
+            <button type="submit" lang="{{ locale }}" title="{{ label }}" aria-label="{{ label }}" {% if app.request.locale == locale %}aria-current="true"{% endif %}>{{ locale|upper }}</button>
+        </form>
+    {% endfor %}
+</nav>

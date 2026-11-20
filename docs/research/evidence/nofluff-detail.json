@@ -1,0 +1,305 @@
+{
+  "source": "nofluff-detail",
+  "url": "https://nofluffjobs.com/api/posting/software-engineer-big-data-adform-warszawa-1",
+  "method": "GET",
+  "checked_at_utc": "2026-11-20T11:45:40.535399+00:00",
+  "user_agent": "JOBFIND-Research/0.1 (one-shot endpoint verification)",
+  "curl_exit_code": 0,
+  "http_code": 200,
+  "content_type": "application/json;charset=UTF-8",
+  "size_download": 4551,
+  "time_total": 0.117668,
+  "url_effective": "https://nofluffjobs.com/api/posting/software-engineer-big-data-adform-warszawa-1",
+  "selected_headers": {
+    "cache-control": "max-age=120, s-maxage=419615"
+  },
+  "body_bytes": 16204,
+  "body_sha256": "ada01cf2426b37e5756f402ba1dd9fe3511d35a04adb04ea1b0929d6ce54c770",
+  "payload_kind": "json",
+  "shape": {
+    "id": "str",
+    "apply": {
+      "option": "str",
+      "leadCollection": "bool",
+      "referenceNumber": "str",
+      "externalPortalLinks": {
+        "type": "array",
+        "length": 0,
+        "first_item_shape": null
+      },
+      "leadCollectionInfoClause": "str"
+    },
+    "specs": {
+      "details": {
+        "custom": {
+          "type": "array",
+          "length": 0,
+          "first_item_shape": null
+        },
+        "chooseTools": "bool",
+        "flexibleHours": "bool"
+      },
+      "help4Ua": "bool",
+      "dailyTasks": {
+        "type": "array",
+        "length": 3,
+        "first_item_shape": "str"
+      },
+      "referral": {
+        "allowed": "bool"
+      }
+    },
+    "title": "str",
+    "basics": {
+      "category": "str",
+      "seniority": {
+        "type": "array",
+        "length": 1,
+        "first_item_shape": "str"
+      }
+    },
+    "company": {
+      "url": "str",
+      "logo": {
+        "original": "str",
+        "jobs_details": "str",
+        "jobs_listing": "str",
+        "jobs_details_2x": "str",
+        "jobs_listing_2x": "str",
+        "companies_details": "str",
+        "companies_listing": "str",
+        "jobs_details_webp": "str",
+        "jobs_listing_webp": "str",
+        "companies_details_2x": "str",
+        "companies_listing_2x": "str",
+        "jobs_details_2x_webp": "str",
+        "jobs_listing_2x_webp": "str",
+        "original_pixel_image": "str",
+        "companies_details_webp": "str",
+        "companies_listing_webp": "str",
+        "companies_details_2x_webp": "str",
+        "companies_listing_2x_webp": "str"
+      },
+      "name": "str",
+      "size": "str",
+      "video": "str"
+    },
+    "details": {
+      "quote": "str",
+      "position": "str",
+      "coverPhoto": {
+        "original": "str",
+        "cropped_resized": "str",
+        "cropped_original": "str",
+        "cropped_resized_2x": "str",
+        "cropped_resized_webp": "str",
+        "cropped_resized_2x_webp": "str",
+        "cropped_original_pixel_image": "str"
+      },
+      "description": "str",
+      "quoteAuthor": "str"
+    },
+    "benefits": {
+      "benefits": {
+        "type": "array",
+        "length": 4,
+        "first_item_shape": "str"
+      },
+      "equipment": {
+        "computer": "str",
+        "monitors": "str",
+        "operatingSystems": {
+          "lin": "bool",
+          "mac": "bool",
+          "win": "bool"
+        }
+      },
+      "officePerks": {
+        "type": "array",
+        "length": 2,
+        "first_item_shape": "str"
+      },
+      "disableTranslation": "bool"
+    },
+    "consents": {
+      "infoClause": "str",
+      "personalDataRequestLink": "str"
+    },
+    "location": {
+      "places": {
+        "type": "array",
+        "length": 1,
+        "first_item_shape": {
+          "country": {
+            "code": "str",
+            "name": "str"
+          },
+          "city": "str",
+          "street": "str",
+          "postalCode": "str",
+          "geoLocation": {
+            "latitude": "float",
+            "longitude": "float"
+          },
+          "url": "str"
+        }
+      },
+      "remote": "int",
+      "multicityCount": "int",
+      "covidTimeRemotely": "bool",
+      "remoteFlexible": "bool",
+      "fieldwork": "bool",
+      "defaultIndex": "int",
+      "hybridDesc": "str"
+    },
+    "defaultUrl": "str",
+    "essentials": {
+      "contract": {
+        "start": "str"
+      },
+      "originalSalary": {
+        "currency": "str",
+        "types": {
+          "permanent": {
+            "period": "str",
+            "range": "list",
+            "paidHoliday": "bool"
+          }
+        },
+        "disclosedAt": "str",
+        "flexibleUpperBound": "bool",
+        "containsSalary": "str"
+      }
+    },
+    "methodology": {
+      "type": "array",
+      "length": 1,
+      "first_item_shape": {
+        "name": "str",
+        "values": {
+          "type": "array",
+          "length": 2,
+          "first_item_shape": "str"
+        }
+      }
+    },
+    "recruitment": {
+      "languages": {
+        "type": "array",
+        "length": 2,
+        "first_item_shape": {
+          "code": "str"
+        }
+      },
+      "processSteps": {
+        "type": "array",
+        "length": 0,
+        "first_item_shape": null
+      },
+      "onlineInterviewAvailable": "bool"
+    },
+    "requirements": {
+      "musts": {
+        "type": "array",
+        "length": 1,
+        "first_item_shape": {
+          "value": "str",
+          "type": "str"
+        }
+      },
+      "nices": {
+        "type": "array",
+        "length": 3,
+        "first_item_shape": {
+          "value": "str",
+          "type": "str"
+        }
+      },
+      "description": "str",
+      "languages": {
+        "type": "array",
+        "length": 2,
+        "first_item_shape": {
+          "type": "str",
+          "code": "str"
+        }
+      }
+    },
+    "wizardCopyMetadata": {
+      "clonedFromJobOfferId": "str",
+      "sectionToCopiedFromJobOfferId": {}
+    },
+    "posted": "int",
+    "postedOrRenewedDaysAgo": "int",
+    "expiresAt": "str",
+    "applyForm": {
+      "controls": {
+        "type": "array",
+        "length": 5,
+        "first_item_shape": {
+          "name": "str",
+          "required": "bool"
+        }
+      }
+    },
+    "status": "str",
+    "postingUrl": "str",
+    "metadata": {
+      "sectionLanguages": {
+        "requirements.description": "str",
+        "daily-tasks": "str",
+        "description": "str"
+      }
+    },
+    "regions": {
+      "type": "array",
+      "length": 1,
+      "first_item_shape": "str"
+    },
+    "reference": "str",
+    "meta": {
+      "videosInCompanyProfileVisible": "bool"
+    },
+    "version": "int",
+    "companyUrl": "str",
+    "seo": {
+      "title": "str",
+      "description": "str"
+    },
+    "analytics": {
+      "lastBump": "int",
+      "lastBumpType": "str",
+      "previousBumpCount": "int",
+      "nextBump": "int",
+      "nextBumpType": "str",
+      "nextBumpCount": "int",
+      "emissionDay": "int",
+      "productType": "str",
+      "emissionBumps": "int",
+      "emissionLength": "int",
+      "emission": "str",
+      "addons": {
+        "bump": "bool",
+        "publication": "bool",
+        "offerOfTheDay": "bool",
+        "topInSearch": "bool",
+        "highlighted": "bool"
+      },
+      "topInSearchConfig": {
+        "pairs": {
+          "type": "array",
+          "length": 0,
+          "first_item_shape": null
+        }
+      }
+    },
+    "applicationStoragePeriod": {
+      "lengthInMonths": "int"
+    }
+  },
+  "scalar_metadata": {},
+  "meta": {
+    "videosInCompanyProfileVisible": true
+  },
+  "structured_success": true
+}

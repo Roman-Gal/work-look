@@ -1,0 +1,53 @@
+{
+  "source": "lever",
+  "url": "https://api.lever.co/v0/postings/spotify?mode=json&limit=1",
+  "method": "GET",
+  "checked_at_utc": "2026-11-20T11:43:44.555015+00:00",
+  "user_agent": "JOBFIND-Research/0.1 (one-shot endpoint verification)",
+  "curl_exit_code": 0,
+  "http_code": 200,
+  "content_type": "application/json; charset=utf-8",
+  "size_download": 9329,
+  "time_total": 0.900686,
+  "url_effective": "https://api.lever.co/v0/postings/spotify?mode=json&limit=1",
+  "selected_headers": {
+    "etag": "W/\"2471-mD5F0oBuztj9mPUctvpTZtIIn34\""
+  },
+  "body_bytes": 9329,
+  "body_sha256": "4a2def7de55b46f83b1fe03ebdcc20931120672d5b9e425dfd33fb4220b49d25",
+  "payload_kind": "json",
+  "shape": {
+    "type": "array",
+    "length": 1,
+    "first_item_shape": {
+      "additionalPlain": "str",
+      "additional": "str",
+      "categories": {
+        "commitment": "str",
+        "department": "str",
+        "location": "str",
+        "team": "str",
+        "allLocations": "list"
+      },
+      "createdAt": "int",
+      "descriptionPlain": "str",
+      "description": "str",
+      "id": "str",
+      "lists": {
+        "type": "array",
+        "length": 3,
+        "first_item_shape": "dict"
+      },
+      "text": "str",
+      "country": "str",
+      "workplaceType": "str",
+      "opening": "str",
+      "openingPlain": "str",
+      "descriptionBody": "str",
+      "descriptionBodyPlain": "str",
+      "hostedUrl": "str",
+      "applyUrl": "str"
+    }
+  },
+  "structured_success": true
+}

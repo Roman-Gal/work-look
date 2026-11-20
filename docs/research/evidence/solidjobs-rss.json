@@ -1,0 +1,32 @@
+{
+  "source": "solidjobs-rss",
+  "url": "https://solid.jobs/rss/job-offers/subcategory/PHP",
+  "method": "GET",
+  "checked_at_utc": "2026-11-20T11:46:33.698509+00:00",
+  "user_agent": "JOBFIND-Research/0.1 (one-shot endpoint verification)",
+  "curl_exit_code": 0,
+  "http_code": 200,
+  "content_type": "application/rss+xml; charset=utf-8",
+  "size_download": 32761,
+  "time_total": 0.147919,
+  "url_effective": "https://solid.jobs/rss/job-offers/subcategory/PHP",
+  "selected_headers": {
+    "cache-control": "no-cache, no-store"
+  },
+  "body_bytes": 32761,
+  "body_sha256": "f385d0e9e8c0ed76506af7858060f5cd56fa1d82a3e489c67f5c8a246efd23da",
+  "payload_kind": "rss",
+  "xml_root": "rss",
+  "item_count": 76,
+  "first_item_fields": [
+    "guid",
+    "link",
+    "category",
+    "category",
+    "title",
+    "description",
+    "pubDate"
+  ],
+  "description_chars": 54,
+  "structured_success": true
+}

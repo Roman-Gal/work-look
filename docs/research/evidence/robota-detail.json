@@ -1,0 +1,18 @@
+{
+  "source": "robota-detail",
+  "url": "https://api.robota.ua/vacancy?id=11386804",
+  "method": "GET",
+  "checked_at_utc": "2026-11-20T11:45:40.718365+00:00",
+  "user_agent": "JOBFIND-Research/0.1 (one-shot endpoint verification)",
+  "curl_exit_code": 0,
+  "http_code": 403,
+  "content_type": "text/html; charset=UTF-8",
+  "size_download": 3261,
+  "time_total": 0.06452,
+  "url_effective": "https://api.robota.ua/vacancy?id=11386804",
+  "selected_headers": {},
+  "body_bytes": 5614,
+  "body_sha256": "cbdbac0abc60e83af4f89ee4b78317fa962f6aac238929c7c9fc112bd88fba35",
+  "payload_kind": "non_structured_or_unparsed",
+  "structured_success": false
+}

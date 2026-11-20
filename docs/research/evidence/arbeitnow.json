@@ -1,0 +1,70 @@
+{
+  "source": "arbeitnow",
+  "url": "https://www.arbeitnow.com/api/job-board-api?page=1",
+  "method": "GET",
+  "checked_at_utc": "2026-11-20T11:43:25.077176+00:00",
+  "user_agent": "JOBFIND-Research/0.1 (one-shot endpoint verification)",
+  "curl_exit_code": 0,
+  "http_code": 200,
+  "content_type": "application/json",
+  "size_download": 508094,
+  "time_total": 0.238058,
+  "url_effective": "https://www.arbeitnow.com/api/job-board-api?page=1",
+  "selected_headers": {
+    "cache-control": "private, max-age=432000",
+    "last-modified": "Fri, 20 Nov 2026 11:03:36 GMT"
+  },
+  "body_bytes": 2279808,
+  "body_sha256": "e8d98a6806e9d454e48473eef41a4159134fd947ef19c26702e5d264c0edc07c",
+  "payload_kind": "json",
+  "shape": {
+    "data": {
+      "type": "array",
+      "length": 300,
+      "first_item_shape": {
+        "slug": "str",
+        "company_name": "str",
+        "title": "str",
+        "description": "str",
+        "remote": "bool",
+        "url": "str",
+        "tags": "list",
+        "job_types": "list",
+        "location": "str",
+        "created_at": "int"
+      }
+    },
+    "links": {
+      "first": "str",
+      "last": "NoneType",
+      "prev": "NoneType",
+      "next": "str"
+    },
+    "meta": {
+      "current_page": "int",
+      "current_page_url": "str",
+      "from": "int",
+      "path": "str",
+      "per_page": "int",
+      "to": "int",
+      "terms": "str",
+      "info": "str"
+    }
+  },
+  "scalar_metadata": {},
+  "meta": {
+    "current_page": 1,
+    "current_page_url": "https://www.arbeitnow.com/api/job-board-api?page=1",
+    "from": 1,
+    "path": "https://www.arbeitnow.com/api/job-board-api",
+    "per_page": 300,
+    "to": 300
+  },
+  "links": {
+    "first": "https://www.arbeitnow.com/api/job-board-api?page=1",
+    "last": null,
+    "prev": null,
+    "next": "https://www.arbeitnow.com/api/job-board-api?page=2"
+  },
+  "structured_success": true
+}

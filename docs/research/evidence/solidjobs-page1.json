@@ -1,0 +1,90 @@
+{
+  "source": "solidjobs-page1",
+  "url": "https://solid.jobs/public-api/offers/IT?campaign=jobfind-local-research&pageSize=1&pageIndex=1",
+  "method": "GET",
+  "checked_at_utc": "2026-11-20T11:46:33.184512+00:00",
+  "user_agent": "JOBFIND-Research/0.1 (one-shot endpoint verification)",
+  "curl_exit_code": 0,
+  "http_code": 200,
+  "content_type": "application/json; charset=utf-8",
+  "size_download": 2373,
+  "time_total": 0.099734,
+  "url_effective": "https://solid.jobs/public-api/offers/IT?campaign=jobfind-local-research&pageSize=1&pageIndex=1",
+  "selected_headers": {
+    "cache-control": "public,max-age=3600"
+  },
+  "body_bytes": 3749,
+  "body_sha256": "ff1aa3026a0107c36477793259316592491a778616846948c1183415be3db21f",
+  "payload_kind": "json",
+  "shape": {
+    "jobs": {
+      "type": "array",
+      "length": 1,
+      "first_item_shape": {
+        "jobOfferKey": "str",
+        "title": "str",
+        "division": "str",
+        "category": "str",
+        "subCategory": "str",
+        "company": "str",
+        "companyLogoUrl": "str",
+        "salary": {
+          "from": "float",
+          "to": "float",
+          "currency": "str",
+          "period": "str",
+          "employmentType": "str"
+        },
+        "contractTime": "str",
+        "locations": {
+          "type": "array",
+          "length": 1,
+          "first_item_shape": "str"
+        },
+        "benefits": {
+          "type": "array",
+          "length": 2,
+          "first_item_shape": "str"
+        },
+        "isRemote": "bool",
+        "isHybrid": "bool",
+        "url": "str",
+        "experienceLevel": "str",
+        "skills": {
+          "type": "array",
+          "length": 6,
+          "first_item_shape": {
+            "level": "str",
+            "name": "str"
+          }
+        },
+        "languages": {
+          "type": "array",
+          "length": 2,
+          "first_item_shape": {
+            "level": "str",
+            "name": "str"
+          }
+        },
+        "description": "str",
+        "validFrom": "str",
+        "validTo": "str",
+        "updatedAt": "str"
+      }
+    },
+    "pageIndex": "int",
+    "pageSize": "int",
+    "totalCount": "int",
+    "totalPages": "int"
+  },
+  "scalar_metadata": {
+    "pageIndex": 1,
+    "pageSize": 1,
+    "totalCount": 1414,
+    "totalPages": 1414
+  },
+  "sample_identifiers": {
+    "jobOfferKey": "31b00d4c-d493-4442-8c9b-0075299d1c9c"
+  },
+  "structured_success": true
+}

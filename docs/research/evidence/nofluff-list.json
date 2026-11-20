@@ -1,0 +1,21 @@
+{
+  "source": "nofluff-list",
+  "url": "https://nofluffjobs.com/api/posting",
+  "method": "GET",
+  "checked_at_utc": "2026-11-20T11:44:39.016616+00:00",
+  "user_agent": "JOBFIND-Research/0.1 (one-shot endpoint verification)",
+  "curl_exit_code": 63,
+  "transport_message": "curl: (63) Would have exceeded max file size",
+  "http_code": 200,
+  "content_type": "application/json;charset=UTF-8",
+  "size_download": 345745,
+  "time_total": 1.31966,
+  "url_effective": "https://nofluffjobs.com/api/posting",
+  "selected_headers": {
+    "cache-control": "max-age=120"
+  },
+  "body_bytes": 19996244,
+  "body_sha256": "74952f033be9ea5f45be071eba8bd05625e9bf10799e000f4a0c30af619e8b6b",
+  "payload_kind": "non_structured_or_unparsed",
+  "structured_success": false
+}

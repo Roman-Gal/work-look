@@ -1,0 +1,72 @@
+{
+  "source": "justjoin",
+  "url": "https://justjoin.it/api/candidate-api/offers?page=1&perPage=1",
+  "method": "GET",
+  "checked_at_utc": "2026-11-20T11:43:26.953437+00:00",
+  "user_agent": "JOBFIND-Research/0.1 (one-shot endpoint verification)",
+  "curl_exit_code": 0,
+  "http_code": 200,
+  "content_type": "application/json; charset=utf-8",
+  "size_download": 6376,
+  "time_total": 0.104748,
+  "url_effective": "https://justjoin.it/api/candidate-api/offers?page=1&perPage=1",
+  "selected_headers": {},
+  "body_bytes": 29753,
+  "body_sha256": "a6d52907094bb2b60621a62aafa7645f897a335b5e62020741aee200ba15f6bd",
+  "payload_kind": "json",
+  "shape": {
+    "data": {
+      "type": "array",
+      "length": 10,
+      "first_item_shape": {
+        "guid": "str",
+        "slug": "str",
+        "title": "str",
+        "workplaceType": "str",
+        "workingTime": "str",
+        "experienceLevel": "str",
+        "category": "dict",
+        "city": "str",
+        "street": "str",
+        "latitude": "float",
+        "longitude": "float",
+        "isRemoteInterview": "bool",
+        "companyName": "str",
+        "companyLogoThumbUrl": "str",
+        "publishedAt": "str",
+        "isOpenToHireUkrainians": "bool",
+        "locations": "list",
+        "employmentTypes": "list",
+        "requiredSkills": "list",
+        "niceToHaveSkills": "list",
+        "languages": "list",
+        "isPromoted": "bool",
+        "isSuperOffer": "bool",
+        "applyMethod": "str",
+        "applyUrl": "NoneType",
+        "lastPublishedAt": "str",
+        "expiredAt": "str",
+        "companyProfileSlug": "str",
+        "hybridWorkSchedule": "NoneType"
+      }
+    },
+    "meta": {
+      "from": "int",
+      "totalItems": "int",
+      "prev": {
+        "cursor": "NoneType",
+        "itemsCount": "int"
+      },
+      "next": {
+        "cursor": "int",
+        "itemsCount": "int"
+      }
+    }
+  },
+  "scalar_metadata": {},
+  "meta": {
+    "from": 0,
+    "totalItems": 10000
+  },
+  "structured_success": true
+}

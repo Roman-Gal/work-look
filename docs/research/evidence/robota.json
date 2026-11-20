@@ -1,0 +1,76 @@
+{
+  "source": "robota",
+  "url": "https://api.robota.ua/vacancy/search?keyWords=php&count=1&page=0",
+  "method": "GET",
+  "checked_at_utc": "2026-11-20T11:44:36.926266+00:00",
+  "user_agent": "JOBFIND-Research/0.1 (one-shot endpoint verification)",
+  "curl_exit_code": 0,
+  "http_code": 200,
+  "content_type": "application/json; charset=utf-8",
+  "size_download": 737,
+  "time_total": 0.378504,
+  "url_effective": "https://api.robota.ua/vacancy/search?keyWords=php&count=1&page=0",
+  "selected_headers": {
+    "cache-control": "no-cache"
+  },
+  "body_bytes": 1143,
+  "body_sha256": "be3a13653088e2279fe1f1d4485e0c814798524f18286cffd7fc4f0fe8a96668",
+  "payload_kind": "json",
+  "shape": {
+    "took": "int",
+    "start": "int",
+    "count": "int",
+    "total": "int",
+    "hasGeoCount": "int",
+    "errorMessage": "NoneType",
+    "documents": {
+      "type": "array",
+      "length": 1,
+      "first_item_shape": {
+        "id": "int",
+        "name": "str",
+        "logo": "str",
+        "designBannerUrl": "str",
+        "designBannerFullUrl": "str",
+        "publicationType": "int",
+        "date": "str",
+        "dateTxt": "str",
+        "hot": "bool",
+        "salary": "int",
+        "salaryFrom": "int",
+        "salaryTo": "int",
+        "salaryComment": "str",
+        "cityName": "str",
+        "cityId": "int",
+        "metroName": "str",
+        "metroId": "int",
+        "districtName": "str",
+        "districtId": "int",
+        "notebookId": "int",
+        "companyName": "str",
+        "formApplyCustomUrl": "str",
+        "isLiked": "bool",
+        "isApply": "bool",
+        "applyDate": "NoneType",
+        "lastViewDate": "NoneType",
+        "distanceText": "str",
+        "latitude": "float",
+        "longitude": "float",
+        "shortDescription": "str",
+        "badges": {
+          "type": "array",
+          "length": 0,
+          "first_item_shape": null
+        }
+      }
+    }
+  },
+  "scalar_metadata": {
+    "count": 1,
+    "total": 33
+  },
+  "sample_identifiers": {
+    "id": 11386804
+  },
+  "structured_success": true
+}

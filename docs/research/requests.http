@@ -1,0 +1,77 @@
+# Research only, checked 2026-11-20. Run requests individually.
+# No application has been started on localhost. These are upstream requests.
+# PUBLIC feeds first; INTERNAL routes below are diagnostic examples, not enabled workers.
+
+### SOLID.Jobs: documented public JSON API, no API key
+GET https://solid.jobs/public-api/offers/IT?campaign=jobfind-local-research&pageIndex=0&pageSize=1
+Accept: application/json
+X-Api-Version: 1.0
+User-Agent: JOBFIND-Research/0.1
+
+### SOLID.Jobs: next page (zero-based)
+GET https://solid.jobs/public-api/offers/IT?campaign=jobfind-local-research&pageIndex=1&pageSize=1
+Accept: application/json
+X-Api-Version: 1.0
+
+### SOLID.Jobs: documented search term, request returned JSON
+GET https://solid.jobs/public-api/offers/IT?campaign=jobfind-local-research&pageIndex=0&pageSize=1&search.searchTerm=PHP
+Accept: application/json
+X-Api-Version: 1.0
+
+### SOLID.Jobs: PHP RSS
+GET https://solid.jobs/rss/job-offers/subcategory/PHP
+Accept: application/rss+xml, application/xml
+
+### DOU: PHP RSS
+GET https://jobs.dou.ua/vacancies/feeds/?category=PHP
+Accept: application/rss+xml, application/xml
+
+### Djinni: PHP RSS
+GET https://djinni.co/jobs/rss/?primary_keyword=PHP
+Accept: application/rss+xml, application/xml
+
+### JustJoinIT INTERNAL: perPage=1 did NOT restrict result to one item
+GET https://justjoin.it/api/candidate-api/offers?page=1&perPage=1
+Accept: application/json
+
+### JustJoinIT INTERNAL: detail, slug taken from a real list response; may expire
+GET https://justjoin.it/api/candidate-api/offers/strada-sp-z-o-o--specjalista-specjalistka-ds-wsparcia-it-mierzecice-support
+Accept: application/json
+
+### NoFluffJobs INTERNAL: diagnostic GET returns 405, Allow: POST; not working search
+GET https://nofluffjobs.com/api/search/posting
+Accept: application/json
+
+### NoFluffJobs INTERNAL: job detail; may expire
+GET https://nofluffjobs.com/api/posting/software-engineer-big-data-adform-warszawa-1
+Accept: application/json
+
+# The huge NoFluffJobs /api/posting list is deliberately not included as a runnable request.
+# Its response exceeded our 20 MB research ceiling; use a verified bounded search later.
+
+### Robota INTERNAL: list only, full detail blocked in the observed environment
+GET https://api.robota.ua/vacancy/search?keyWords=php&count=1&page=0
+Accept: application/json
+
+### Greenhouse: documented per-employer public API (list without descriptions)
+GET https://boards-api.greenhouse.io/v1/boards/stripe/jobs
+Accept: application/json
+
+### Lever: documented per-employer public API
+GET https://api.lever.co/v0/postings/spotify?mode=json&limit=1
+Accept: application/json
+
+### Ashby: documented per-employer public API (can be several MB)
+GET https://api.ashbyhq.com/posting-api/job-board/ashby?includeCompensation=true
+Accept: application/json
+
+### Remotive: max 4 polls/day recommended by provider; limit was not confirmed in our response
+GET https://remotive.com/api/remote-jobs?search=php&limit=1
+Accept: application/json
+
+### Arbeitnow: European supplementary source, not a Poland-wide job API
+GET https://www.arbeitnow.com/api/job-board-api?page=1
+Accept: application/json
+
+# Adzuna / Jooble need keys and were not tested. See 02-job-sources.txt.
+# No endpoints are invented here for Work.ua, Pracuj.pl, theprotocol.it or Bulldogjob.

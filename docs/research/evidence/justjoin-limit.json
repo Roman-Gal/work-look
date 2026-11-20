@@ -1,0 +1,120 @@
+{
+  "source": "justjoin-limit",
+  "url": "https://justjoin.it/api/candidate-api/offers?limit=1",
+  "method": "GET",
+  "checked_at_utc": "2026-11-20T11:44:37.363725+00:00",
+  "user_agent": "JOBFIND-Research/0.1 (one-shot endpoint verification)",
+  "curl_exit_code": 0,
+  "http_code": 200,
+  "content_type": "application/json; charset=utf-8",
+  "size_download": 6323,
+  "time_total": 0.11979,
+  "url_effective": "https://justjoin.it/api/candidate-api/offers?limit=1",
+  "selected_headers": {},
+  "body_bytes": 29366,
+  "body_sha256": "3bcd2cc2ac115636e8768a66525cbb624ad161b5cbaf45a84e7e7c69e95df86b",
+  "payload_kind": "json",
+  "shape": {
+    "data": {
+      "type": "array",
+      "length": 10,
+      "first_item_shape": {
+        "guid": "str",
+        "slug": "str",
+        "title": "str",
+        "workplaceType": "str",
+        "workingTime": "str",
+        "experienceLevel": "str",
+        "category": {
+          "key": "str",
+          "parentKey": "NoneType"
+        },
+        "city": "str",
+        "street": "str",
+        "latitude": "float",
+        "longitude": "float",
+        "isRemoteInterview": "bool",
+        "companyName": "str",
+        "companyLogoThumbUrl": "str",
+        "publishedAt": "str",
+        "isOpenToHireUkrainians": "bool",
+        "locations": {
+          "type": "array",
+          "length": 1,
+          "first_item_shape": {
+            "city": "str",
+            "street": "str",
+            "latitude": "float",
+            "longitude": "float",
+            "slug": "str"
+          }
+        },
+        "employmentTypes": {
+          "type": "array",
+          "length": 10,
+          "first_item_shape": {
+            "from": "float",
+            "fromPerUnit": "float",
+            "to": "float",
+            "toPerUnit": "float",
+            "currency": "str",
+            "currencySource": "str",
+            "type": "str",
+            "unit": "str",
+            "gross": "bool"
+          }
+        },
+        "requiredSkills": {
+          "type": "array",
+          "length": 9,
+          "first_item_shape": {
+            "skillId": "str",
+            "name": "str",
+            "level": "int",
+            "group": "NoneType"
+          }
+        },
+        "niceToHaveSkills": {
+          "type": "array",
+          "length": 0,
+          "first_item_shape": null
+        },
+        "languages": {
+          "type": "array",
+          "length": 0,
+          "first_item_shape": null
+        },
+        "isPromoted": "bool",
+        "isSuperOffer": "bool",
+        "applyMethod": "str",
+        "applyUrl": "NoneType",
+        "lastPublishedAt": "str",
+        "expiredAt": "str",
+        "companyProfileSlug": "str",
+        "hybridWorkSchedule": "NoneType"
+      }
+    },
+    "meta": {
+      "from": "int",
+      "totalItems": "int",
+      "prev": {
+        "cursor": "NoneType",
+        "itemsCount": "int"
+      },
+      "next": {
+        "cursor": "int",
+        "itemsCount": "int"
+      }
+    }
+  },
+  "scalar_metadata": {},
+  "meta": {
+    "from": 0,
+    "totalItems": 10000
+  },
+  "sample_identifiers": {
+    "guid": "bcc99999-ceee-485c-8bd9-bb0ff911e773",
+    "slug": "strada-sp-z-o-o--specjalista-specjalistka-ds-wsparcia-it-mierzecice-support"
+  },
+  "structured_success": true
+}

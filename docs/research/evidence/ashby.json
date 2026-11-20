@@ -1,0 +1,49 @@
+{
+  "source": "ashby",
+  "url": "https://api.ashbyhq.com/posting-api/job-board/ashby?includeCompensation=true",
+  "method": "GET",
+  "checked_at_utc": "2026-11-20T11:43:45.518459+00:00",
+  "user_agent": "JOBFIND-Research/0.1 (one-shot endpoint verification)",
+  "curl_exit_code": 0,
+  "http_code": 200,
+  "content_type": "application/json; charset=utf-8",
+  "size_download": 1937692,
+  "time_total": 0.363956,
+  "url_effective": "https://api.ashbyhq.com/posting-api/job-board/ashby?includeCompensation=true",
+  "selected_headers": {
+    "cache-control": "public, max-age=60, stale-while-revalidate=60",
+    "etag": "W/\"job-board:6fab3ce2974da6a85d2ce50509e93b23d2cfb5588794e614ae5ac072dccc7f2b\""
+  },
+  "body_bytes": 4609243,
+  "body_sha256": "c3d9e604694b374a5e1fd11853accc8bd5c0f0233f2e22d174d72ae1e7c128aa",
+  "payload_kind": "json",
+  "shape": {
+    "jobs": {
+      "type": "array",
+      "length": 79,
+      "first_item_shape": {
+        "id": "str",
+        "title": "str",
+        "department": "str",
+        "team": "str",
+        "employmentType": "str",
+        "location": "str",
+        "shouldDisplayCompensationOnJobPostings": "bool",
+        "secondaryLocations": "list",
+        "publishedAt": "str",
+        "isListed": "bool",
+        "isRemote": "bool",
+        "workplaceType": "str",
+        "address": "dict",
+        "jobUrl": "str",
+        "applyUrl": "str",
+        "descriptionHtml": "str",
+        "descriptionPlain": "str",
+        "compensation": "dict"
+      }
+    },
+    "apiVersion": "str"
+  },
+  "scalar_metadata": {},
+  "structured_success": true
+}

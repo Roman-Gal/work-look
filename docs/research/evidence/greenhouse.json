@@ -1,0 +1,66 @@
+{
+  "source": "greenhouse",
+  "url": "https://boards-api.greenhouse.io/v1/boards/stripe/jobs",
+  "method": "GET",
+  "checked_at_utc": "2026-11-20T11:44:37.547940+00:00",
+  "user_agent": "JOBFIND-Research/0.1 (one-shot endpoint verification)",
+  "curl_exit_code": 0,
+  "http_code": 200,
+  "content_type": "application/json",
+  "size_download": 42350,
+  "time_total": 0.202474,
+  "url_effective": "https://boards-api.greenhouse.io/v1/boards/stripe/jobs",
+  "selected_headers": {
+    "etag": "W/\"a2cf5e7a3bb0521fec2c7df2b551af7d\"",
+    "cache-control": "max-age=0, private, must-revalidate"
+  },
+  "body_bytes": 482385,
+  "body_sha256": "a2cf5e7a3bb0521fec2c7df2b551af7dfbc9a045f7263e4845047ad62f5bdab0",
+  "payload_kind": "json",
+  "shape": {
+    "jobs": {
+      "type": "array",
+      "length": 773,
+      "first_item_shape": {
+        "absolute_url": "str",
+        "data_compliance": {
+          "type": "array",
+          "length": 1,
+          "first_item_shape": {
+            "type": "str",
+            "requires_consent": "bool",
+            "requires_processing_consent": "bool",
+            "requires_retention_consent": "bool",
+            "retention_period": "NoneType",
+            "demographic_data_consent_applies": "bool"
+          }
+        },
+        "education": "str",
+        "internal_job_id": "int",
+        "location": {
+          "name": "str"
+        },
+        "metadata": "NoneType",
+        "id": "int",
+        "updated_at": "str",
+        "requisition_id": "str",
+        "title": "str",
+        "company_name": "str",
+        "first_published": "str",
+        "language": "str",
+        "application_deadline": "NoneType"
+      }
+    },
+    "meta": {
+      "total": "int"
+    }
+  },
+  "scalar_metadata": {},
+  "meta": {
+    "total": 773
+  },
+  "sample_identifiers": {
+    "id": 8172510
+  },
+  "structured_success": true
+}

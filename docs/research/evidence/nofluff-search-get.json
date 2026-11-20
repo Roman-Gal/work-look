@@ -1,0 +1,28 @@
+{
+  "source": "nofluff-search-get",
+  "url": "https://nofluffjobs.com/api/search/posting",
+  "method": "GET",
+  "checked_at_utc": "2026-11-20T11:43:28.325938+00:00",
+  "user_agent": "JOBFIND-Research/0.1 (one-shot endpoint verification)",
+  "curl_exit_code": 0,
+  "http_code": 405,
+  "content_type": "application/json;charset=UTF-8",
+  "size_download": 139,
+  "time_total": 0.079099,
+  "url_effective": "https://nofluffjobs.com/api/search/posting",
+  "selected_headers": {
+    "allow": "POST",
+    "cache-control": "no-cache, no-store, max-age=0, must-revalidate"
+  },
+  "body_bytes": 133,
+  "body_sha256": "b1306a270fb0b4c7cf6ef4e6103e84b326a91876729c182f0355d66ddf2171a9",
+  "payload_kind": "json",
+  "shape": {
+    "type": "str",
+    "status": "int",
+    "detail": "str",
+    "instance": "str"
+  },
+  "scalar_metadata": {},
+  "structured_success": false
+}

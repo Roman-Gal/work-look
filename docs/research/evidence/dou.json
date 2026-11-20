@@ -1,0 +1,31 @@
+{
+  "source": "dou",
+  "url": "https://jobs.dou.ua/vacancies/feeds/?category=PHP",
+  "method": "GET",
+  "checked_at_utc": "2026-11-20T11:43:25.015538+00:00",
+  "user_agent": "JOBFIND-Research/0.1 (one-shot endpoint verification)",
+  "curl_exit_code": 0,
+  "http_code": 200,
+  "content_type": "application/rss+xml; charset=utf-8",
+  "size_download": 39784,
+  "time_total": 0.250786,
+  "url_effective": "https://jobs.dou.ua/vacancies/feeds/?category=PHP",
+  "selected_headers": {
+    "last-modified": "Fri, 20 Nov 2026 08:10:18 GMT",
+    "cache-control": "max-age=600"
+  },
+  "body_bytes": 150218,
+  "body_sha256": "56ae941072bb4bb60e98a272f50aac56e6b33be11d8f286c225b20050da54cea",
+  "payload_kind": "rss",
+  "xml_root": "rss",
+  "item_count": 25,
+  "first_item_fields": [
+    "title",
+    "link",
+    "description",
+    "pubDate",
+    "guid"
+  ],
+  "description_chars": 3145,
+  "structured_success": true
+}

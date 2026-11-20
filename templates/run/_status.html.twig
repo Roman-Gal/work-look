@@ -1,0 +1,1 @@
+{% set labels = {queued: 'run.status.queued', running: 'run.status.running', completed: 'run.status.completed', failed: 'run.status.failed', cancelled: 'run.status.cancelled', limited: 'run.status.limited'} %}<span class="badge status-{{ run.status }}">{{ labels[run.status]|default(run.status)|trans }}</span>
