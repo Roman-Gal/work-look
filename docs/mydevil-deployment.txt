@@ -1,0 +1,56 @@
+MyDevil deployment — work in progress, 2026-11-20
+
+Requested: publish WorkLook and the two active Telegram bot projects on MyDevil MD2.
+SSH destination recorded locally in ignored var/deploy/ notes.
+An existing interactive SSH login is open, but a separate BatchMode SSH connection
+was rejected and no local SSH agent was available. No server changes have been made.
+Remote authentication and account inventory are required before assigning domains,
+ports, database names, installing cron entries or changing Telegram webhooks.
+
+Repositories:
+ https://github.com/Roman-Gal/work-look
+ https://github.com/Roman-Gal/telegram-task-planner
+ https://github.com/Roman-Gal/ukrainizator-bot
+The separate telegram-ukrainian-translator upstream is the earlier implementation;
+the current Python working copy publishes to ukrainizator-bot.
+
+Prepared scripts:
+ tools/mydevil/preflight.sh — read-only account/runtime/site/port inventory.
+ tools/mydevil/worklook-worker.sh — bounded PHP 8.4 worker, non-overlapping cron calls.
+These scripts are prepared locally; execution on this account is not yet verified.
+
+Deployment requirements:
+ - WorkLook: PHP 8.4 CLI/web, Composer install --no-dev, prod env, PostgreSQL or SQLite,
+   migrations, compiled AssetMapper assets, public/ as the only document root, HTTPS,
+   private runtime data and a bounded Messenger worker. Create/preserve a private login.
+ - Planner: Node 22.22+ or a compatible newer version with node:sqlite. Native HTTP
+   server and persistent timer/queue worker must stay running even without web traffic.
+   Use a reserved loopback port and HTTPS proxy, a single supervised process, private
+   .env and SQLite data. Passenger idle shutdown alone is unsuitable for reminder timing.
+ - Ukrainizator: Python 3.11+, FastAPI/Uvicorn, SQLite, language detector and a working
+   translation endpoint. The current local endpoint is LibreTranslate at 127.0.0.1:5000.
+   Native FreeBSD compatibility must be checked. CTranslate2 binary wheels list Linux,
+   macOS and Windows; a ready FreeBSD install cannot be assumed. No alternate third-party
+   translation service will receive chat messages without choosing that provider first.
+
+Cutover:
+ - Inventory the account and back up any existing server configuration first.
+ - Build isolated directories and dependencies; transfer secrets only over authenticated
+   SSH/SFTP, never Git. Preserve the configured chat restrictions and owner settings.
+ - Confirm private app access, SSL, proxy routing, health endpoints and secret rejection.
+ - Stop only the identified local bot processes, take consistent final SQLite backups
+   through SQLite's backup API (not a lone .sqlite copy while WAL is active), transfer,
+   then start the remote processes and update webhooks with drop_pending_updates=false.
+ - Do not run old reminder workers in parallel with the new planner.
+ - Verify getMe/getWebhookInfo and /health; avoid unsolicited test messages to real chats.
+ - Keep rollback backups. Preserve other cron entries/sites; add only managed entries.
+ - Record final URLs, exact revisions, runtime paths and restart/rollback commands here.
+
+Authoritative references checked:
+ https://pomoc.mydevil.net/Strona_WWW/
+ https://pomoc.mydevil.net/PHP/
+ https://pomoc.mydevil.net/Node.js/
+ https://pomoc.mydevil.net/Python/
+ https://pomoc.mydevil.net/Rezerwacja_portow/
+ https://pomoc.mydevil.net/Cron/
+ https://opennmt.net/CTranslate2/installation.html
