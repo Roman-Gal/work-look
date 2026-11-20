@@ -4,7 +4,8 @@ WorkLook — приватний AI-агент пошуку роботи
 ЩО ВЖЕ ПРАЦЮЄ
 
 Symfony 7.4 LTS, Twig, Symfony UX Turbo/Stimulus, AssetMapper без Node build.
-Інтерфейс українською, польською та англійською; перемикач UK / PL / EN на вході й у кабінеті.
+Інтерфейс українською, польською та англійською; перемикач UA / PL / EN на вході й у кабінеті.
+Видиме UA відповідає внутрішній локалі uk у Symfony та атрибуті HTML lang.
 Українська — стандартна. Вибір зберігається cookie у цьому браузері на рік, без зміни БД.
 Переклади: translations/messages.uk.yaml, messages.pl.yaml, messages.en.yaml;
 Twig використовує Symfony Translator, форми автоматично перекладають labels/help/placeholders.
