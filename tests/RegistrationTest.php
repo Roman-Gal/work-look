@@ -51,7 +51,7 @@ final class RegistrationTest extends WebTestCase
         $mail = $this->requestEmail('NEW@test.local'); self::assertEmailCount(1);
         $token = $this->token($mail);
         $pending = $this->em()->getRepository(User::class)->findOneBy(['email' => 'new@test.local']);
-        self::assertFalse($pending->isVerified); self::assertFalse($pending->liveAiEnabled);
+        self::assertFalse($pending->isVerified); self::assertTrue($pending->liveAiEnabled); self::assertNull($pending->freeSearchRunId);
         self::assertSame(hash('sha256', $token), $pending->verificationHash);
         self::assertNotSame($token, $pending->verificationHash);
         $this->client->request('GET', '/verify-email?token='.$token); // GET must not consume or activate anything.
@@ -114,12 +114,13 @@ final class RegistrationTest extends WebTestCase
         $this->client->submit($page->selectButton('Увійти')->form(['_username' => $user->email, '_password' => 'a known internal password']));
         self::assertResponseRedirects('/login'); $this->client->request('GET', '/'); self::assertResponseRedirects('/login');
     }
-    public function testPublicAccountCannotSubmitLiveAiRun(): void
+    public function testPublicAccountKeepsItsFreeSearchWhenAiIsUnavailable(): void
     {
         $user = new User(); $user->email = 'public@test.local'; $user->isVerified = true; $user->password = 'unusable'; $this->em()->persist($user); $this->em()->flush();
         $this->client->loginUser($user); $page = $this->client->request('GET', '/');
-        $this->client->submit($page->filter('form[name="run"]')->form(['run[mode]' => 'live', 'run[sources]' => ['solidjobs'], 'run[minimumScore]' => 65]));
+        $this->client->submit($page->filter('form[name="run"]')->form(['run[sources]' => ['solidjobs'], 'run[minimumScore]' => 65]));
         self::assertResponseRedirects('/'); self::assertSame(0, $this->em()->getRepository(AgentRun::class)->count([]));
+        self::assertNull($this->em()->getRepository(User::class)->find($user->id)->freeSearchRunId);
     }
     public function testSmtpFailureInvalidatesUnsentTokenWithoutLeakingCredentials(): void
     {

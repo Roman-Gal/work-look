@@ -22,8 +22,11 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(options: ['default' => false])]
     public bool $isVerified = false;
 
-    #[ORM\Column(options: ['default' => false])]
-    public bool $liveAiEnabled = false;
+    #[ORM\Column(options: ['default' => true])]
+    public bool $liveAiEnabled = true;
+
+    #[ORM\Column(length: 32, nullable: true)]
+    public ?string $freeSearchRunId = null;
 
     #[ORM\Column(length: 64, unique: true, nullable: true)]
     public ?string $verificationHash = null;

@@ -30,7 +30,7 @@ final class ToolExecutor
         if (!in_array($source, $run->sources, true) || !is_string($keywords) || !is_int($page)) { throw new \InvalidArgumentException('Недозволені параметри пошуку.'); }
         if (($state['search_count'] ?? 0) >= 4) { return ['error' => 'Ліміт: максимум 4 пошукові запити за запуск. Оцініть уже знайдені вакансії.']; }
         ++$state['search_count'];
-        $data = $this->catalog->search($source, $keywords, $page, $run->mode === 'demo');
+        $data = $this->catalog->search($source, $keywords, $page);
         $ids = array_map(fn (Job $job) => $job->id, $data['jobs']);
         $hash = hash('sha256', json_encode($ids));
         if (isset($state['page_hashes'][$hash]) && $ids !== []) { return ['error' => 'Джерело повторило сторінку; припиніть цю пагінацію.']; }

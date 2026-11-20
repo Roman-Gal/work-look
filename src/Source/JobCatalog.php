@@ -9,24 +9,14 @@ final class JobCatalog
 {
     public function __construct(private SolidJobsSource $solid, private RssJobsSource $rss, private EntityManagerInterface $em) {}
 
-    public function search(string $source, string $keywords, int $page, bool $demo = false): array
+    public function search(string $source, string $keywords, int $page): array
     {
         if ($page < 0 || $page > 2 || mb_strlen($keywords) > 120) { throw new \InvalidArgumentException('Параметри пошуку перевищують дозволені межі.'); }
-        if ($demo) {
-            $data = ['jobs' => [[
-                'source' => 'demo', 'external_id' => 'sample-php', 'title' => 'demo.title',
-                'company' => 'demo.company', 'url' => 'https://example.com/demo-job',
-                'description' => 'demo.description',
-                'locations' => ['demo.location'], 'salaries' => [], 'skills' => ['PHP', 'Symfony'],
-                'work_mode' => 'remote', 'completeness' => 'full', 'expires_at' => null,
-            ]], 'next_page' => null, 'coverage' => 'demo'];
-        } else {
-            $data = match ($source) {
-                'solidjobs' => $this->solid->search($keywords, $page),
-                'dou', 'djinni' => $this->rss->search($source, $keywords, $page),
-                default => throw new \InvalidArgumentException('Джерело не дозволене.'),
-            };
-        }
+        $data = match ($source) {
+            'solidjobs' => $this->solid->search($keywords, $page),
+            'dou', 'djinni' => $this->rss->search($source, $keywords, $page),
+            default => throw new \InvalidArgumentException('Джерело не дозволене.'),
+        };
         $saved = [];
         foreach ($data['jobs'] as $row) {
             $job = $this->em->getRepository(Job::class)->findOneBy(['source' => $row['source'], 'externalId' => $row['external_id']]) ?? new Job();

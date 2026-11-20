@@ -16,8 +16,11 @@ Registration flow (UA / PL / EN):
  The database stores SHA-256(token), not the raw token; expiry one hour.
  Conditional UPDATE atomically activates the account and clears the token. No auto-login.
  Registering an already verified address never overwrites its password or permissions.
- Existing operator-created accounts remain verified; new public users start in demo mode.
- Dashboard AND worker check live-AI permission before spending the owner's API budget.
+ Existing operator-created accounts remain verified; every new account has one free AI search.
+ Dashboard and worker enforce the durable run-ID allowance in PostgreSQL. A disabled
+ account cannot spend its allowance. Queue/debit commit atomically; cancellation or
+ failure before the first model attempt returns the reservation. Later attempts require
+ future payment support; the payment button is disabled and no payment API exists.
  An operator can explicitly grant/revoke permission:
    php84 bin/console app:user:live-ai EMAIL on --env=prod
    php84 bin/console app:user:live-ai EMAIL off --env=prod
@@ -52,7 +55,7 @@ SQLite -> PostgreSQL:
  JSON, booleans, timestamps, row counts and each field are compared without printing values.
  Foreign keys are enforced; auto-generated identity sequences are set after the import.
  Migration metadata belongs to the new target and is intentionally not copied from SQLite.
- Validate schema, login, private profile, a real queued demo run, and email confirmation.
+ Validate schema, login, private profile, a mocked-provider queued AI search, and email confirmation.
  Switch current release only when these checks pass; preserve old code/config/snapshot.
  Do not upload local private databases while the user's previous restriction is in force.
 

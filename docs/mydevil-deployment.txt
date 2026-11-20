@@ -95,8 +95,10 @@ Email and AI:
  Registration with one-hour single-use email confirmation is active in UA/PL/EN.
  Sender noreply-worklook@rh-additional.usermd.net, SMTP mail93.mydevil.net:587 STARTTLS,
  certificate verification enabled. Actual SMTP->IMAP->HTTPS registration/login tested.
- New public accounts default to demo mode; controller AND worker check live-AI permission.
- OpenAI key is still absent unless the owner later configures it; WorkLook stays in demo.
+ New public accounts have one free AI search, enforced atomically in PostgreSQL.
+ Payment is a disabled placeholder; there is no payment provider or financial charge.
+ OpenAI key is still absent unless the owner later configures it; AI search stays
+ unavailable and the free allowance is not consumed. Demo mode/generator are removed.
  DeepL key/real Ukrainian translation verified with a synthetic sentence, no user content.
  Translator messages now go to DeepL, not the PC's LibreTranslate.
 
@@ -126,3 +128,23 @@ References:
  https://github.com/brianc/node-postgres/tree/master/packages/pg-native
  https://www.psycopg.org/psycopg3/docs/basic/install.html
  https://developers.deepl.com/api-reference/translate/request-translation
+
+LATEST PRODUCT UPDATE — single free search and explicit test reset:
+ User explicitly requested deleting ALL WorkLook test data except the demo login;
+ demo-associated profiles/history/matches can also be erased. Telegram apps untouched.
+ New migration adds app_user.free_search_run_id (null = unused). Conditional UPDATE
+ reserves exactly one queued run. Run+debit+Doctrine queue are one DB transaction.
+ Worker checks reservation and claims queued->running in the DB, not only a file lock.
+ Cancel/failure before modelCalls>0 refunds only the matching run ID, idempotently.
+ Actual model attempts consume the free search, including attempts that fail later.
+ Existing live-ai on/off command now only suspends/restores permission; it never
+ grants another search. Future payments must add a real entitlement ledger rather
+ than resetting the trial pointer. No billing amount, provider or checkout exists.
+ All public demo options, fake-job generator and demo rendering paths are removed.
+ User keeps demo@worklook.local and its password, with an empty profile/history and
+ one unused free search. Other WorkLook accounts, profiles, jobs, matches and queue
+ are erased. Schema/migration metadata remains. Test backup artifacts are purged or
+ rewritten to remove only WorkLook entries while preserving bot snapshots.
+ Local tests: 39 tests/296 assertions; includes atomic allowance, queue rollback,
+ stale-refund protection, missing-key/cancel refund, model-attempt consumption,
+ payment placeholder and destructive reset retaining exactly the chosen login.

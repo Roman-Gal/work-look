@@ -3,6 +3,7 @@
 namespace App\Agent;
 
 use App\Entity\AgentRun;
+use App\Service\SearchAllowance;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Lock\LockFactory;
 use Psr\Log\LoggerInterface;
@@ -10,7 +11,7 @@ use Psr\Log\LoggerInterface;
 final class AgentRunner
 {
     public function __construct(private OpenAiClient $model, private ToolExecutor $tools, private EntityManagerInterface $em,
-        private LockFactory $lockFactory, private LoggerInterface $logger) {}
+        private LockFactory $lockFactory, private LoggerInterface $logger, private SearchAllowance $allowance) {}
 
     public function run(AgentRun $run): void
     {
@@ -19,14 +20,16 @@ final class AgentRunner
         try {
             if ($run->status !== 'queued') { return; }
             if ($run->cancelRequested) { $run->status = 'cancelled'; $run->finishedAt = new \DateTimeImmutable(); $this->em->flush(); return; }
-            $run->status = 'running'; $run->startedAt = new \DateTimeImmutable();
-            $run->addEvent($run->mode === 'demo' ? 'event.demo_started' : 'event.started');
-            $this->em->flush();
-            if ($run->mode === 'demo') { $this->demo($run); }
-            else {
-                if (!$run->user->isVerified || !$run->user->liveAiEnabled) { throw new \RuntimeException('registration.demo_only'); }
-                $this->live($run);
-            }
+            if ($run->mode !== 'live' || !$this->allowance->permits($run)) { throw new \RuntimeException('trial.exhausted'); }
+            if (!$this->model->isConfigured()) { throw new \RuntimeException('trial.ai_unavailable'); }
+            $started = new \DateTimeImmutable();
+            $claimed = $this->em->getConnection()->executeStatement(
+                "UPDATE agent_run SET status = 'running', started_at = ? WHERE id = ? AND status = 'queued'", [$started->format('Y-m-d H:i:s'), $run->id]
+            );
+            if (!$claimed) { $this->em->refresh($run); return; }
+            $run->status = 'running'; $run->startedAt = $started;
+            $run->addEvent('event.started'); $this->em->flush();
+            $this->live($run);
             if ($run->status === 'running') { $run->status = 'completed'; }
         } catch (\Throwable $error) {
             $run->status = 'failed';
@@ -35,7 +38,7 @@ final class AgentRunner
             $this->logger->error('Agent run failed', ['run_id' => $run->id, 'exception_type' => $error::class]);
         } finally {
             if (!$run->isActive()) { $run->finishedAt ??= new \DateTimeImmutable(); }
-            $this->em->flush(); $lock->release();
+            $this->em->flush(); $this->allowance->releaseUnused($run); $lock->release();
         }
     }
 
@@ -82,23 +85,6 @@ final class AgentRunner
         }
         $run->status = 'limited'; $run->summary = 'event.limited';
         $run->addEvent($run->summary, 'warning');
-    }
-
-    private function demo(AgentRun $run): void
-    {
-        $state = ['search_count' => 0];
-        $this->tools->execute($run, 'get_my_profile', [], $state); ++$run->toolCalls;
-        $results = $this->tools->execute($run, 'search_jobs', ['source' => $run->sources[0], 'keywords' => 'Symfony · demo', 'page' => 0], $state); ++$run->toolCalls;
-        $jobId = $results['jobs'][0]['job_id'];
-        $this->tools->execute($run, 'get_job_details', ['job_id' => $jobId], $state); ++$run->toolCalls;
-        $this->tools->execute($run, 'save_job_match', ['job_id' => $jobId, 'score' => 75,
-            'reasons' => ['demo.reason'],
-            'gaps' => ['demo.gap']], $state); ++$run->toolCalls;
-        $ids = array_column($run->profileSnapshot['facts'], 'id');
-        if ($ids !== [] && $run->minimumScore <= 75) {
-            $this->tools->execute($run, 'prepare_cv', ['job_id' => $jobId, 'fact_ids' => array_slice($ids, 0, 10)], $state); ++$run->toolCalls;
-        }
-        $run->summary = 'event.demo_finished';
     }
 
     private function cancelled(AgentRun $run): bool

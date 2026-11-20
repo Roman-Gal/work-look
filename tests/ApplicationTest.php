@@ -3,7 +3,7 @@ namespace App\Tests;
 
 use App\Agent\{AgentRunner, OpenAiClient, ToolExecutor};
 use App\Entity\{AgentRun, Job, JobMatch, Profile, User};
-use App\Service\CanonicalCv;
+use App\Service\{CanonicalCv, SearchAllowance, SearchLauncher};
 use App\Source\{JobCatalog, RssJobsSource, SolidJobsSource, SourceHttpClient};
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Tools\SchemaTool;
@@ -38,18 +38,20 @@ final class ApplicationTest extends WebTestCase
         $user = new User(); $user->isVerified = true; $user->liveAiEnabled = true; $user->email = $email; $user->password = password_hash('valid-local-test-password', PASSWORD_BCRYPT, ['cost' => 4]);
         $this->em->persist($user); $this->em->flush(); return $user;
     }
-    private function createRun(string $mode = 'demo'): AgentRun
+    private function createRun(string $mode = 'live'): AgentRun
     {
         $run = new AgentRun($this->owner); $run->mode = $mode; $run->sources = ['solidjobs'];
         $run->profileSnapshot = $this->em->getRepository(Profile::class)->findOneBy(['user' => $this->owner])->snapshot();
-        $this->em->persist($run); $this->em->flush(); return $run;
+        $this->em->persist($run); $this->em->flush();
+        if ($mode === 'live') { self::assertTrue((new SearchAllowance($this->em))->reserve($this->owner, $run)); $this->em->refresh($this->owner); }
+        return $run;
     }
-    private function runner(?MockHttpClient $modelHttp = null): AgentRunner
+    private function runner(?MockHttpClient $modelHttp = null, string $apiKey = 'test-only-key'): AgentRunner
     {
         $sourceHttp = new SourceHttpClient(new MockHttpClient(new MockResponse(json_encode(SourceTest::solidPayload()))), new ArrayAdapter());
         $catalog = new JobCatalog(new SolidJobsSource($sourceHttp), new RssJobsSource($sourceHttp), $this->em);
-        return new AgentRunner(new OpenAiClient($modelHttp ?? new MockHttpClient(), 'test-only-key', 'test-model'),
-            new ToolExecutor($catalog, $this->em, new CanonicalCv()), $this->em, new LockFactory(new InMemoryStore()), new NullLogger());
+        return new AgentRunner(new OpenAiClient($modelHttp ?? new MockHttpClient(), $apiKey, 'test-model'),
+            new ToolExecutor($catalog, $this->em, new CanonicalCv()), $this->em, new LockFactory(new InMemoryStore()), new NullLogger(), new SearchAllowance($this->em));
     }
     public function testUnauthenticatedVisitorsCannotReadDashboardOrFiles(): void
     {
@@ -72,7 +74,7 @@ final class ApplicationTest extends WebTestCase
     }
     public function testCrossUserRunMatchAndPdfAreNotAccessible(): void
     {
-        $run = $this->createRun(); $this->runner()->run($run);
+        $run = $this->createRun(); $this->fixtureMatch($run);
         $match = $this->em->getRepository(JobMatch::class)->findOneBy(['run' => $run]);
         $id = $match->id; $runId = $run->id; $this->client->loginUser($this->other);
         foreach (['/runs/'.$runId, '/matches/'.$id, '/matches/'.$id.'/cv.pdf'] as $url) {
@@ -82,7 +84,7 @@ final class ApplicationTest extends WebTestCase
     }
     public function testStatusCannotChangeWithoutCsrf(): void
     {
-        $run = $this->createRun(); $this->runner()->run($run);
+        $run = $this->createRun(); $this->fixtureMatch($run);
         $id = $this->em->getRepository(JobMatch::class)->findOneBy(['run' => $run])->id;
         $this->client->loginUser($this->owner);
         $this->client->request('POST', '/matches/'.$id.'/status', ['status' => 'Applied', '_token' => 'invalid']); self::assertResponseStatusCodeSame(403);
@@ -141,7 +143,7 @@ final class ApplicationTest extends WebTestCase
     }
     public function testLocalizedRunAndMatchPreserveFactsAcrossLanguages(): void
     {
-        $run = $this->createRun(); $this->runner()->run($run);
+        $run = $this->createRun(); $this->fixtureMatch($run);
         $match = $this->em->getRepository(JobMatch::class)->findOneBy(['run' => $run]);
         $facts = $run->profileSnapshot['facts'];
         $this->client->loginUser($this->owner);
@@ -149,19 +151,25 @@ final class ApplicationTest extends WebTestCase
             $this->client->getCookieJar()->set(new \Symfony\Component\BrowserKit\Cookie('worklook_locale', $locale));
             $this->client->request('GET', '/runs/'.$run->id);
             self::assertResponseIsSuccessful(); self::assertSelectorTextContains('.badge', $status);
-            self::assertStringNotContainsString('event.demo_finished', $this->client->getResponse()->getContent());
+
             $this->client->request('GET', '/matches/'.$match->id);
             self::assertResponseIsSuccessful(); self::assertSelectorTextContains('h2', $heading);
             self::assertSelectorTextContains('details', 'Англійська B2.');
         }
         self::assertSame($facts, $run->profileSnapshot['facts']);
     }
-    public function testDemoCompletesAndPdfContainsOnlySnapshotFacts(): void
+    private function fixtureMatch(AgentRun $run): JobMatch
     {
-        $run = $this->createRun(); $runner = $this->runner(); $runner->run($run); $runner->run($run);
-        self::assertSame('completed', $run->status); self::assertSame(0, $run->modelCalls);
-        self::assertCount(1, $this->em->getRepository(JobMatch::class)->findBy(['run' => $run]));
-        $match = $this->em->getRepository(JobMatch::class)->findOneBy(['run' => $run]); self::assertCount(2, $match->selectedFactIds);
+        $job = new Job(); $job->source = 'solidjobs'; $job->externalId = 'fixture-php'; $job->title = 'PHP Developer';
+        $job->company = 'Fixture company'; $job->description = 'PHP and English B2.'; $job->url = 'https://solid.jobs/offer/fixture';
+        $job->completeness = 'full'; $job->workMode = 'remote'; $job->locations = ['Warszawa']; $this->em->persist($job);
+        $match = new JobMatch($run, $job); $match->score = 75; $match->selectedFactIds = array_column($run->profileSnapshot['facts'], 'id');
+        $run->status = 'completed'; $run->finishedAt = new \DateTimeImmutable(); $this->em->persist($match); $this->em->flush(); return $match;
+    }
+    public function testPdfContainsOnlySnapshotFacts(): void
+    {
+        $run = $this->createRun(); $match = $this->fixtureMatch($run);
+        self::assertCount(2, $match->selectedFactIds);
         $this->client->loginUser($this->owner); $this->client->request('GET', '/matches/'.$match->id.'/cv.pdf');
         self::assertResponseIsSuccessful(); self::assertResponseHeaderSame('Content-Type', 'application/pdf');
         self::assertStringStartsWith('%PDF-', $this->client->getResponse()->getContent());
@@ -172,6 +180,88 @@ final class ApplicationTest extends WebTestCase
     {
         $run = $this->createRun('live'); $run->cancelRequested = true; $this->em->flush(); $this->runner()->run($run);
         self::assertSame('cancelled', $run->status); self::assertSame(0, $run->modelCalls);
+        self::assertSame(1, (new SearchAllowance($this->em))->remaining($this->owner));
+    }
+    public function testOnlyOneSearchCanBeQueuedAndPaymentButtonIsAPlaceholder(): void
+    {
+        $this->client->disableReboot();
+        self::getContainer()->set(OpenAiClient::class, new OpenAiClient(new MockHttpClient(), 'test-key', 'test-model'));
+        $this->client->loginUser($this->owner);
+        $page = $this->client->request('GET', '/');
+        self::assertSelectorNotExists('select[name="run[mode]"]');
+        self::assertSelectorExists('button[data-testid="future-payment"][disabled]');
+        self::assertSelectorTextContains('[data-testid="search-allowance"]', '1');
+        $form = $page->filter('form[name="run"]')->form(); $this->client->submit($form);
+        self::assertResponseStatusCodeSame(303);
+        self::assertSame(1, $this->em->getRepository(AgentRun::class)->count([]));
+        self::assertSame(0, (new SearchAllowance($this->em))->remaining($this->owner));
+        $run = $this->em->getRepository(AgentRun::class)->findOneBy([]);
+        self::assertSame('live', $run->mode);
+        $this->client->submit($form); // Same request twice must not consume twice or queue twice.
+        self::assertSame(1, $this->em->getRepository(AgentRun::class)->count([]));
+        $run = $this->em->find(AgentRun::class, $run->id);
+        $run->status = 'completed'; $run->modelCalls = 1; $this->em->flush();
+        $page = $this->client->request('GET', '/');
+        self::assertSelectorTextContains('[data-testid="search-allowance"]', '0');
+        self::assertSelectorExists('button[type="submit"].primary[disabled]');
+        $this->client->submit($page->filter('form[name="run"]')->form());
+        self::assertResponseRedirects('/'); self::assertSame(1, $this->em->getRepository(AgentRun::class)->count([]));
+    }
+    public function testAtomicReservationRejectsASecondRunEvenWithAStaleUserObject(): void
+    {
+        $allowance = new SearchAllowance($this->em); $a = new AgentRun($this->owner); $b = new AgentRun($this->owner);
+        self::assertTrue($allowance->reserve($this->owner, $a));
+        self::assertFalse($allowance->reserve($this->owner, $b));
+        self::assertTrue($allowance->permits($a)); self::assertFalse($allowance->permits($b));
+        $a->status = 'failed'; $allowance->releaseUnused($a);
+        self::assertTrue($allowance->reserve($this->owner, $b));
+        $allowance->releaseUnused($a); // An old refund must not erase a newer reservation.
+        self::assertTrue($allowance->permits($b)); self::assertSame(0, $allowance->remaining($this->owner));
+    }
+    public function testQueueFailureRollsBackTheRunAndFreeSearch(): void
+    {
+        $bus = $this->createMock(\Symfony\Component\Messenger\MessageBusInterface::class);
+        $bus->method('dispatch')->willThrowException(new \RuntimeException('Queue unavailable'));
+        $launcher = new SearchLauncher($this->em, $bus, new SearchAllowance($this->em));
+        $profile = $this->em->getRepository(Profile::class)->findOneBy(['user' => $this->owner]);
+        try { $launcher->start($this->owner, $profile, ['sources' => ['solidjobs'], 'minimumScore' => 65], 'uk'); self::fail('Expected dispatch failure.'); }
+        catch (\RuntimeException $error) { self::assertSame('Queue unavailable', $error->getMessage()); }
+        self::assertSame(0, $this->em->getRepository(AgentRun::class)->count([]));
+        self::assertSame(1, (new SearchAllowance($this->em))->remaining($this->owner));
+    }
+    public function testWorkerRejectsUnreservedRunsWithoutCallingTheModel(): void
+    {
+        $run = $this->createRun('unreserved'); $run->mode = 'live'; $this->em->flush();
+        $this->runner()->run($run);
+        self::assertSame('failed', $run->status); self::assertSame(0, $run->modelCalls);
+        self::assertSame(1, (new SearchAllowance($this->em))->remaining($this->owner));
+    }
+    public function testFailedModelAttemptStillUsesTheFreeSearch(): void
+    {
+        $run = $this->createRun();
+        $this->runner(new MockHttpClient(new MockResponse('{}', ['http_code' => 500])))->run($run);
+        self::assertSame('failed', $run->status); self::assertSame(1, $run->modelCalls);
+        self::assertSame(0, (new SearchAllowance($this->em))->remaining($this->owner));
+    }
+    public function testMissingApiKeyBeforeWorkerStartReturnsTheReservation(): void
+    {
+        $run = $this->createRun(); $this->runner(apiKey: '')->run($run);
+        self::assertSame('failed', $run->status); self::assertSame(0, $run->modelCalls);
+        self::assertSame(1, (new SearchAllowance($this->em))->remaining($this->owner));
+    }
+    public function testResetErasesTestDataButKeepsTheExactDemoLogin(): void
+    {
+        $run = $this->createRun(); $this->fixtureMatch($run); $password = $this->owner->password;
+        $command = new \App\Command\ResetTestDataCommand($this->em->getConnection());
+        $tester = new \Symfony\Component\Console\Tester\CommandTester($command);
+        self::assertSame(2, $tester->execute(['--keep-user' => $this->owner->email]));
+        self::assertSame(2, $this->em->getRepository(User::class)->count([]));
+        self::assertSame(0, $tester->execute(['--keep-user' => $this->owner->email, '--confirm' => 'RESET_WORKLOOK_TEST_DATA']));
+        $id = $this->owner->id; $this->em->clear();
+        $owner = $this->em->find(User::class, $id);
+        self::assertSame($password, $owner->password); self::assertNull($owner->freeSearchRunId);
+        self::assertSame(1, $this->em->getRepository(User::class)->count([]));
+        foreach ([AgentRun::class, JobMatch::class, Job::class, Profile::class] as $entity) { self::assertSame(0, $this->em->getRepository($entity)->count([])); }
     }
     public function testRealAgentProtocolChoosesToolsAndReplaysOutputs(): void
     {
@@ -193,7 +283,7 @@ final class ApplicationTest extends WebTestCase
                 : [['type' => 'message', 'role' => 'assistant', 'content' => [['type' => 'output_text', 'text' => 'Знайдено вакансію; перевірте умови.']]]];
             return new MockResponse(json_encode(['status' => 'completed', 'output' => $output, 'usage' => ['total_tokens' => 100]]));
         });
-        $this->runner($modelHttp)->run($run);
+        $runner = $this->runner($modelHttp); $runner->run($run); $runner->run($run);
         self::assertSame('completed', $run->status); self::assertSame(6, $run->modelCalls); self::assertSame(5, $run->toolCalls);
         self::assertSame(600, $run->totalTokens); self::assertSame([$fact], $this->em->getRepository(JobMatch::class)->findOneBy(['run' => $run])->selectedFactIds);
     }
