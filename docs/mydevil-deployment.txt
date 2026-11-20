@@ -1,56 +1,99 @@
-MyDevil deployment — work in progress, 2026-11-20
+MyDevil MD2 — isolated demo deployment, 2026-11-20
 
-Requested: publish WorkLook and the two active Telegram bot projects on MyDevil MD2.
-SSH destination recorded locally in ignored var/deploy/ notes.
-An existing interactive SSH login is open, but a separate BatchMode SSH connection
-was rejected and no local SSH agent was available. No server changes have been made.
-Remote authentication and account inventory are required before assigning domains,
-ports, database names, installing cron entries or changing Telegram webhooks.
+URL: https://rh-additional.usermd.net/
+Status: WorkLook is online. Bot code/dependencies are installed but the bots are
+deliberately NOT activated. The user explicitly withheld all existing credentials
+and personal data pending security review. External API fields are empty/placeholders.
+The existing local bots, their databases and live Telegram webhooks were not changed.
 
-Repositories:
- https://github.com/Roman-Gal/work-look
+No real Telegram tokens, webhook secrets, translation/OpenAI keys, CVs, task history,
+Telegram IDs or queued messages were uploaded. A fresh server-only APP_SECRET and
+an isolated demo login protect the website; this is separate from the user's local
+account. Demo login details are stored only in ignored var/deploy/mydevil-demo-access.txt.
+The only saved sample search is explicitly fictional; there are no canonical CV facts.
+
+Deployed applications (relative to the hosting account's home):
+
+WorkLook:
+ apps/work-look/releases/b7be3a1
+ Code revision: b7be3a183caffb62b7663d135ad049e62c43a5ea
+ apps/work-look/current -> selected release
+ apps/work-look/shared/.env.local -> server configuration, mode 0600
+ apps/work-look/shared/var/ -> private cache, logs and new SQLite database
+ Domain public_html -> apps/work-look/current/public only
+ PHP 8.4.28; Composer --no-dev; compiled AssetMapper assets; APP_ENV=prod/APP_DEBUG=0.
+ The initial default index page was preserved in public_html.before-worklook outside
+ the selected document root. HTTPS is enforced and PHP open_basedir is restricted
+ to the domain defaults plus this WorkLook application directory.
+
+Planner:
  https://github.com/Roman-Gal/telegram-task-planner
+ Code revision: 9f2690340aeb38bd4366445319f1ea71ca9dcffd
+ apps/telegram-task-planner/current -> code
+ apps/telegram-task-planner/shared/.env -> placeholder configuration, mode 0600
+ apps/telegram-task-planner/shared/planner.sqlite -> new schema, zero user-data rows
+ Node 24.22.1 with built-in SQLite; no npm runtime dependencies.
+ Reserved loopback service port: 18380. No live bot process was started.
+
+Ukrainizator:
  https://github.com/Roman-Gal/ukrainizator-bot
-The separate telegram-ukrainian-translator upstream is the earlier implementation;
-the current Python working copy publishes to ukrainizator-bot.
+ Code revision: 2720478c40a8ddc66d2f29f5d2064901f2c74cee
+ apps/ukrainizator-bot/current -> Python code
+ apps/ukrainizator-bot/venv -> native Python 3.12.11 environment
+ apps/ukrainizator-bot/shared/.env -> placeholder configuration, mode 0600
+ apps/ukrainizator-bot/shared/translator.sqlite -> new schema, zero user-data rows
+ Reserved loopback service port: 18381. No live bot process was started.
+ Native FastAPI dependencies were built and installed. On FreeBSD the requirements
+ select pure Python Lingua 1.4.2; Windows/Linux retain 2.2.0. The same behavior tests
+ pass on the FreeBSD profile, though exact confidence scores can differ by version.
+ DeepL API support is implemented and tested with mock HTTP; no real DeepL request
+ was sent. LibreTranslate/CTranslate2/ONNX models are not needed for this mode.
 
-Prepared scripts:
- tools/mydevil/preflight.sh — read-only account/runtime/site/port inventory.
- tools/mydevil/worklook-worker.sh — bounded PHP 8.4 worker, non-overlapping cron calls.
-These scripts are prepared locally; execution on this account is not yet verified.
+Ingress and supervision:
+ - WorkLook can forward POST /telegram/webhook and /translator/telegram/webhook to
+   fixed localhost services. Secret validation, body limits and redirects disabled.
+ - Both routes currently return 503: integration ports/secrets are intentionally
+   disabled. The website cannot redirect updates from the working local bots.
+ - Cron calls current/tools/mydevil/worklook-worker.sh every minute; lockf prevents
+   overlap and each worker is bounded to 300 seconds/128 MB between messages.
+   It only processes button-created runs; it does not schedule autonomous searches.
+ - tools/mydevil/bot-service.sh planner|translator uses FreeBSD daemon -r only after
+   validating the local config. With placeholders it reports standby and exits
+   before network access. A copy is installed as apps/bot-service.sh.
+ - Bot autostart cron entries are intentionally absent until activation is approved.
+ - Restart a WorkLook worker: php84 bin/console messenger:stop-workers --env=prod;
+   cron will start the next worker. Run commands from apps/work-look/current.
+ - Deployment logs and a backup of the original cron live in apps/deploy-logs/.
 
-Deployment requirements:
- - WorkLook: PHP 8.4 CLI/web, Composer install --no-dev, prod env, PostgreSQL or SQLite,
-   migrations, compiled AssetMapper assets, public/ as the only document root, HTTPS,
-   private runtime data and a bounded Messenger worker. Create/preserve a private login.
- - Planner: Node 22.22+ or a compatible newer version with node:sqlite. Native HTTP
-   server and persistent timer/queue worker must stay running even without web traffic.
-   Use a reserved loopback port and HTTPS proxy, a single supervised process, private
-   .env and SQLite data. Passenger idle shutdown alone is unsuitable for reminder timing.
- - Ukrainizator: Python 3.11+, FastAPI/Uvicorn, SQLite, language detector and a working
-   translation endpoint. The current local endpoint is LibreTranslate at 127.0.0.1:5000.
-   Native FreeBSD compatibility must be checked. CTranslate2 binary wheels list Linux,
-   macOS and Windows; a ready FreeBSD install cannot be assumed. No alternate third-party
-   translation service will receive chat messages without choosing that provider first.
+Verified:
+ - HTTPS login, authenticated dashboard, empty profile and Secure session cookie.
+ - A real server-side demo run: form -> Doctrine queue -> worker -> saved result.
+ - External AI disabled; no real model/API/job-board calls in this demo.
+ - /.env.local (404), /.git/config (403), /composer.json (404), database URL (404).
+ - Both bot webhook routes return 503 without credentials/configuration.
+ - No previous user data imported; both bot stores have zero user-data rows.
+ - Local WorkLook suite: 23 tests, 163 assertions.
+ - FreeBSD planner suite: 67 tests, all passed; translator suite: 75 tests, all passed.
+ - Server Composer audit: zero reported advisories or abandoned production packages.
+ These are bounded checks, not a claim of a completed independent security audit.
 
-Cutover:
- - Inventory the account and back up any existing server configuration first.
- - Build isolated directories and dependencies; transfer secrets only over authenticated
-   SSH/SFTP, never Git. Preserve the configured chat restrictions and owner settings.
- - Confirm private app access, SSL, proxy routing, health endpoints and secret rejection.
- - Stop only the identified local bot processes, take consistent final SQLite backups
-   through SQLite's backup API (not a lone .sqlite copy while WAL is active), transfer,
-   then start the remote processes and update webhooks with drop_pending_updates=false.
- - Do not run old reminder workers in parallel with the new planner.
- - Verify getMe/getWebhookInfo and /health; avoid unsolicited test messages to real chats.
- - Keep rollback backups. Preserve other cron entries/sites; add only managed entries.
- - Record final URLs, exact revisions, runtime paths and restart/rollback commands here.
+Activation is a separate authorized step:
+ - Choose/approve the actual external service account and key, and approve secret/data
+   transfer. Populate private server .env files; never commit or expose credentials.
+ - Explicitly decide whether to migrate current databases or start clean. Before an
+   actual migration stop only the identified local bot processes, then take final
+   SQLite backup-API snapshots; a lone .sqlite copy while WAL is active is insufficient.
+ - Configure the matching ingress secrets/ports in WorkLook, start one bot worker
+   per database, and register webhooks with drop_pending_updates=false.
+ - Verify getMe/getWebhookInfo and health endpoints, without unsolicited test messages.
+ - Never run the old planner reminder worker concurrently with the migrated instance.
+ - Temporary deployment SSH access is to be removed after this deployment's checks.
 
-Authoritative references checked:
+Authoritative references:
  https://pomoc.mydevil.net/Strona_WWW/
  https://pomoc.mydevil.net/PHP/
  https://pomoc.mydevil.net/Node.js/
  https://pomoc.mydevil.net/Python/
  https://pomoc.mydevil.net/Rezerwacja_portow/
  https://pomoc.mydevil.net/Cron/
- https://opennmt.net/CTranslate2/installation.html
+ https://developers.deepl.com/api-reference/translate/request-translation

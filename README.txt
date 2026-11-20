@@ -1,5 +1,8 @@
 WorkLook — приватний AI-агент пошуку роботи
-Стан на 2026-11-20: локальний MVP; на MyDevil ще не розгорнуто.
+Стан на 2026-11-20: локальний MVP та ізольована демоверсія на MyDevil MD2.
+Демостенд: https://rh-additional.usermd.net/ . Справжні API-ключі та користувацькі дані не переносилися.
+Дані нового тестового акаунта — тільки у локальному ігнорованому var/deploy/mydevil-demo-access.txt.
+Поточне розміщення, перевірки та режим очікування ботів: docs/mydevil-deployment.txt.
 
 ЩО ВЖЕ ПРАЦЮЄ
 
@@ -146,10 +149,11 @@ SQLite і знімки профілю не зашифровані самим з�
 PDF, незмінність фактів, джерела/XXE, demo/idempotence та модельний tool loop із mock API.
 Реальні GET до джерел виконуються діагностичною командою, а не автоматично з тестів.
 
-МАЙБУТНЄ РОЗГОРТАННЯ MYDEVIL MD2
+РОЗГОРТАННЯ MYDEVIL MD2
 
-Це окремий етап; інструкція не означає, що вже перевірено конкретний акаунт.
-План: PHP 8.4 + PostgreSQL провайдера, Doctrine queue, нативні CLI worker.
+Демостенд перевірено з PHP 8.4, новою SQLite-базою та Messenger Doctrine transport.
+PostgreSQL залишається окремим наступним кроком. Нижче — загальні команди розгортання;
+фактичні каталоги й перевірки поточного стенда описано в docs/mydevil-deployment.txt.
 Docker і власний Node server для цього застосунку не потрібні.
 На хості скопіюйте .env.prod.example у .env.local; впишіть реальні secret, DB host
 і serverVersion із акаунта. APP_ENV=prod у .env.local обирає production і для вебзапитів.
@@ -168,8 +172,8 @@ Docker і власний Node server для цього застосунку не
   php84 bin/console cache:clear --env=prod --no-debug
   php84 bin/console app:user:create your@email.example --env=prod --no-debug
 Worker запускати окремим процесом з обмеженнями часу/RAM і перезапуском засобами хоста.
-Cron може запускати bounded worker під lock; це обробка вже натиснутих кнопок,
-а не самостійний щогодинний пошук. Схему restart/lock перевірити на акаунті MyDevil.
+На демостенді cron запускає bounded worker під FreeBSD lockf; це обробка вже
+натиснутих кнопок, а не самостійний щогодинний пошук. Боти без зовнішніх ключів не запускаються.
 Після оновлення коду: messenger:stop-workers та повторний запуск worker.
 
 Ngrok поки не запущений. Для зовнішнього перегляду спочатку потрібні prod env,
