@@ -1,150 +1,125 @@
-MyDevil MD2 — isolated demo deployment, 2026-11-20
+MyDevil MD2 — active production deployment, 2026-11-20
 
 URL: https://rh-additional.usermd.net/
-Status: WorkLook is online. Bot code/dependencies are installed but the bots are
-deliberately NOT activated. The user explicitly withheld all existing credentials
-and personal data pending security review. External API fields are empty/placeholders.
-The existing local bots, their databases and live Telegram webhooks were not changed.
+SSH: RH-additional@s93.mydevil.net (FreeBSD, PHP 8.4.28, Node 24.22.1, Python 3.12).
+The user explicitly approved transfer of bot tokens/data, supplied the DeepL key,
+and separately approved the local WorkLook account/history migration.
+All three active applications now use PostgreSQL 16.16 on pgsql93.mydevil.net.
+The database route is lo0 on the same server; the provider DB endpoint has no TLS.
+Remote desktop access must use an SSH tunnel. No public database port was opened.
 
-No real Telegram tokens, webhook secrets, translation/OpenAI keys, CVs, task history,
-Telegram IDs or queued messages were uploaded. A fresh server-only APP_SECRET and
-an isolated demo login protect the website; this is separate from the user's local
-account. Demo login details are stored only in ignored var/deploy/mydevil-demo-access.txt.
-The only saved sample search is explicitly fictional; there are no canonical CV facts.
+Repositories / versions:
+ Local ngrok planner: https://github.com/Roman-Gal/telegram-task-planner
+ Local ngrok translator: https://github.com/Roman-Gal/ukrainizator-bot
+ Both originals retain their history and the tag ngrok-2026-11-20.
+ MyDevil planner (private): https://github.com/Roman-Gal/telegram-task-planner-mydevil
+ Runtime revision: afac38c (PostgreSQL libpq, same UI/reminder/ownership behavior).
+ MyDevil translator (private): https://github.com/Roman-Gal/ukrainizator-bot-mydevil
+ Runtime revision: 097833f (PostgreSQL psycopg + DeepL; hides DSN from settings repr).
+ Original Node translator also remains at Roman-Gal/telegram-ukrainian-translator.
+ WorkLook runtime: c4c71253fe9081fea27a1ff4e0c46eaee8884082; later repo revisions
+ contain operations scripts/documentation/default-connection configuration.
 
-Deployed applications (relative to the hosting account's home):
+Active directories, relative to /usr/home/RH-additional:
+ apps/work-look/current -> releases/c4c7125
+ apps/telegram-task-planner/current -> releases/afac38c
+ apps/ukrainizator-bot/current -> releases/097833f
+ Every app has a private shared/.env[.local] and its own PostgreSQL database role.
+ WorkLook DB: p1091_worklook. Planner DB: p1091_planner. Translator DB: p1091_translator.
+ Real secrets are only in private files (0600), outside public/ and outside Git.
+ New passwords were generated on the host; transferred Telegram/webhook/DeepL secrets
+ came from the user's explicitly approved inputs. GitHub personal credentials and
+ SSH private keys were not installed on the host.
+ The local owner-only TXT var/deploy/mydevil-credentials.PRIVATE.txt contains the live
+ app/DB/mail credentials; its contents must never be pasted into tracked documentation.
 
-WorkLook:
- apps/work-look/releases/c4c7125
- Code revision: c4c71253fe9081fea27a1ff4e0c46eaee8884082
- apps/work-look/current -> selected release
- apps/work-look/shared/.env.local -> server configuration, mode 0600
- apps/work-look/shared/var/log/ -> private shared logs
- apps/work-look/current/var/ -> private per-release cache (0700)
- PostgreSQL 16.16: p1091_worklook, role p1091_worklook, pgsql93.mydevil.net
- Previous SQLite is retained only as a private rollback artifact, no longer active.
- Domain public_html -> apps/work-look/current/public only
- PHP 8.4.28; Composer --no-dev; compiled AssetMapper assets; APP_ENV=prod/APP_DEBUG=0.
- The initial default index page was preserved in public_html.before-worklook outside
- the selected document root. HTTPS is enforced and PHP open_basedir is restricted
- to the domain defaults plus this WorkLook application directory.
+Ingress and process management:
+ WorkLook's PHP public/ is the ONLY document root; HTTPS forced, cache off, WAF on.
+ POST /telegram/webhook -> 127.0.0.1:18380/telegram/webhook (planner).
+ POST /translator/telegram/webhook -> 127.0.0.1:18381/telegram/webhook (translator).
+ Both validate X-Telegram-Bot-Api-Secret-Token, reject oversized/non-JSON input,
+ and forward only to fixed local services with redirects/cookies disabled.
+ External tests confirmed correct-secret 200, wrong-secret 401, no public TCP access
+ to either backend port. Synthetic updates had no chat/message and sent no messages.
+ Duplicate delivery persisted once, then completed in PostgreSQL; test rows removed.
+ Telegram getMe and getWebhookInfo confirmed distinct bot identities, exact hosted
+ URLs and zero pending updates at the end of checks. drop_pending_updates=false.
 
-Planner:
- https://github.com/Roman-Gal/telegram-task-planner
- Code revision: 9f2690340aeb38bd4366445319f1ea71ca9dcffd
- apps/telegram-task-planner/current -> code
- apps/telegram-task-planner/shared/.env -> placeholder configuration, mode 0600
- apps/telegram-task-planner/shared/planner.sqlite -> new schema, zero user-data rows
- Node 24.22.1 with built-in SQLite; no npm runtime dependencies.
- Reserved loopback service port: 18380. No live bot process was started.
+ apps/bot-service.sh planner|translator uses native FreeBSD daemon -r. Exactly one
+ supervisor/worker per app; PostgreSQL session advisory locks prevent second workers.
+ Supervisor/child PID files and logs live in each app's private shared directory.
+ Cron starts/checks each supervisor every minute. WorkLook's separate lockf worker
+ also runs from cron; it consumes button-created jobs, not scheduled autonomous searches.
+ Local ngrok bots, gateway and LibreTranslate were stopped by the identity-checking
+ Windows control panel. Their local tokens/secrets were replaced with disabled markers
+ so accidentally opening the panel cannot replace hosted Telegram webhooks.
+ One bot token has one active webhook. Returning to ngrok requires deliberate config.
+ The local WorkLook web process was stopped; .env.local now targets PostgreSQL through
+ localhost:8543. Do not start a second production worker from the PC.
 
-Ukrainizator:
- https://github.com/Roman-Gal/ukrainizator-bot
- Code revision: 2720478c40a8ddc66d2f29f5d2064901f2c74cee
- apps/ukrainizator-bot/current -> Python code
- apps/ukrainizator-bot/venv -> native Python 3.12.11 environment
- apps/ukrainizator-bot/shared/.env -> placeholder configuration, mode 0600
- apps/ukrainizator-bot/shared/translator.sqlite -> new schema, zero user-data rows
- Reserved loopback service port: 18381. No live bot process was started.
- Native FastAPI dependencies were built and installed. On FreeBSD the requirements
- select pure Python Lingua 1.4.2; Windows/Linux retain 2.2.0. The same behavior tests
- pass on the FreeBSD profile, though exact confidence scores can differ by version.
- DeepL API support is implemented and tested with mock HTTP; no real DeepL request
- was sent. LibreTranslate/CTranslate2/ONNX models are not needed for this mode.
+Migration / cleanup:
+ Bot snapshots were taken with SQLite backup API after stopping local writers.
+ Planner: 2 users, 2 memberships, 8 tasks (none open), 191 updates, 8 actions,
+ 98 wizard receipts, 13 deliveries, 1 draft, 1 group access, 1 user picker.
+ Translator: 33 jobs, 2 joke cooldown records, no pending jobs.
+ Every imported field and row count was hashed/compared in a transaction; foreign keys
+ enforced, planner task identity sequence repaired. Original IDs/timestamps retained.
+ WorkLook local data added without replacing hosted users/history: 1 account, 2 runs,
+ 2 matches. The existing public job identity was reused; original local catalog fields
+ were preserved inside each imported match's _imported_catalog JSON snapshot.
+ No profiles/CV existed in that local source. Existing hosted accounts were unchanged.
 
-Ingress and supervision:
- - WorkLook can forward POST /telegram/webhook and /translator/telegram/webhook to
-   fixed localhost services. Secret validation, body limits and redirects disabled.
- - Both routes currently return 503: integration ports/secrets are intentionally
-   disabled. The website cannot redirect updates from the working local bots.
- - Cron calls current/tools/mydevil/worklook-worker.sh every minute; lockf prevents
-   overlap and each worker is bounded to 300 seconds/128 MB between messages.
-   It only processes button-created runs; it does not schedule autonomous searches.
- - tools/mydevil/bot-service.sh planner|translator uses FreeBSD daemon -r only after
-   validating the local config. With placeholders it reports standby and exits
-   before network access. A copy is installed as apps/bot-service.sh.
- - Bot autostart cron entries are intentionally absent until activation is approved.
- - Restart a WorkLook worker: php84 bin/console messenger:stop-workers --env=prod;
-   cron will start the next worker. Run commands from apps/work-look/current.
- - Deployment logs and a backup of the original cron live in apps/deploy-logs/.
+ All three PostgreSQL dumps were actually restored into isolated disposable databases;
+ every table/row/value matched a shared repeatable-read exported snapshot. Both test
+ databases were deleted afterwards. Verification reports live in private deploy-logs.
+ Then 27 local SQLite files + 4 sidecars and 7 server SQLite files + 4 sidecars were
+ removed. One compressed private SQLite rollback archive remains per machine:
+ PC: var/deploy/bots-migration/sqlite-rollback-20261120.zip (owner-only ACL directory).
+ Host: apps/work-look/shared/backups/sqlite-rollback-20261120.zip (0600).
+ These archives are inactive recovery artifacts, not second working databases.
+ Current app state is PostgreSQL only. Library/model files are not application databases.
+ Automated tests may create fresh disposable SQLite fixtures; do not import those.
 
-Verified:
- - HTTPS login, authenticated dashboard, empty profile and Secure session cookie.
- - A real server-side demo run: form -> Doctrine queue -> worker -> saved result.
- - External AI disabled; no real model/API/job-board calls in this demo.
- - /.env.local (404), /.git/config (403), /composer.json (404), database URL (404).
- - Both bot webhook routes return 503 without credentials/configuration.
- - No previous user data imported; both bot stores have zero user-data rows.
- - Local WorkLook suite: 32 tests, 238 assertions, including email registration security.
- - FreeBSD planner suite: 67 tests, all passed; translator suite: 75 tests, all passed.
- - Server Composer audit: zero reported advisories or abandoned production packages.
- These are bounded checks, not a claim of a completed independent security audit.
+Backups:
+ WorkLook daily 03:17 server time: current/tools/mydevil/database-backup.sh.
+ Bots daily 03:27 server time: apps/bots-database-backup.sh (versioned source under
+ WorkLook tools/mydevil/bots-database-backup.sh).
+ Each uses private shared/.pgpass, pg_dump custom format, pg_restore --list validation,
+ 14-day retention, backups outside public/. One actual restore drill passed for all 3.
+ Keep separately controlled off-host backups for recovery from a hosting-account loss.
 
-Bot/API activation is a separate authorized step:
- - Choose/approve the actual external service account and key, and approve secret/data
-   transfer. Populate private server .env files; never commit or expose credentials.
- - Explicitly decide whether to migrate current databases or start clean. Before an
-   actual migration stop only the identified local bot processes, then take final
-   SQLite backup-API snapshots; a lone .sqlite copy while WAL is active is insufficient.
- - Configure the matching ingress secrets/ports in WorkLook, start one bot worker
-   per database, and register webhooks with drop_pending_updates=false.
- - Verify getMe/getWebhookInfo and health endpoints, without unsolicited test messages.
- - Never run the old planner reminder worker concurrently with the migrated instance.
- - Temporary deployment SSH access was removed after the checks. A fresh key-only
-   connection was denied, then local private/public key files were deleted.
-   The owner's existing interactive SSH session/password were not changed.
+Email and AI:
+ Registration with one-hour single-use email confirmation is active in UA/PL/EN.
+ Sender noreply-worklook@rh-additional.usermd.net, SMTP mail93.mydevil.net:587 STARTTLS,
+ certificate verification enabled. Actual SMTP->IMAP->HTTPS registration/login tested.
+ New public accounts default to demo mode; controller AND worker check live-AI permission.
+ OpenAI key is still absent unless the owner later configures it; WorkLook stays in demo.
+ DeepL key/real Ukrainian translation verified with a synthetic sentence, no user content.
+ Translator messages now go to DeepL, not the PC's LibreTranslate.
 
+Verification:
+ WorkLook: 32 tests/238 assertions before this migration; real PostgreSQL import,
+ registration, private-file/CSRF probes and queued demo verified on the server.
+ Planner: 68 tests passed on PostgreSQL, 1 SQLite-only legacy migration test skipped;
+ original/local logic suite passes. Native close/reopen lifecycle and session locks tested.
+ Translator: 75 tests passed on PostgreSQL; extra DSN-repr privacy test also passed
+ locally and on FreeBSD. No production tokens/text sent by unit tests.
+ Python DB URL is excluded from Settings repr; token-containing HTTP URLs are not logged.
+ Production dependency audits/checks and final health are recorded in deploy-logs.
+ These checks are not an independent penetration test. Apps share an OS account;
+ compromising that account can expose all its private files. Stronger isolation needs
+ separate OS accounts/hosts. Application data/backups are not application-encrypted.
 
-PostgreSQL and email registration update:
- - All existing SERVER demo data moved from SQLite using a consistent backup snapshot.
- - Every source field and row count was checked in one transaction, foreign keys were
-   enforced and identity sequences repaired. Imported: 1 account, 1 run, 1 job, 1 match;
-   profile and queue were empty. No local personal database was uploaded.
- - Dedicated DB ownership confirmed; PUBLIC CONNECT and public-schema rights revoked.
-   Role has no superuser, createdb, createrole, replication or bypassrls privileges.
- - The provider does not support PostgreSQL TLS here. The host route to the database
-   address was explicitly verified as lo0 on s93 (same-server loopback, no external hop).
-   Remote desktop DB access must use SSH tunneling, not a public exposed DB port.
- - Initial SQLite snapshot and previous env/cron are in private shared/backups/
-   before-postgres-20261120T185619Z/ (0700; snapshot/env files 0600).
- - A native pg_dump backup runs daily at 03:17 server time, keeps 14 days of dated dumps,
-   and validates pg_restore --list. Restore into a separate DB and off-host copies are
-   still operational follow-ups; archive validation alone is not a restore drill.
- - SMTP sender: noreply-worklook@rh-additional.usermd.net, mail93.mydevil.net:587,
-   STARTTLS required, certificate verification enabled. Password generated on the host;
-   no existing user's mailbox password was read/reset/transferred.
- - /register and /verify-email are live in UA, PL, EN. Email ownership comes first;
-   password set afterwards. Hashed, single-use, one-hour token; CSRF and mail limits.
- - Public signups have demo access. Both HTTP controller and background worker require
-   explicit permission to use the owner's AI budget; API key is still empty on host.
- - Actual SMTP delivery to the newly created application mailbox was retrieved over
-   verified IMAP TLS, then confirmed through HTTPS and password login to PostgreSQL.
-   A real queued demo completed via cron worker. Synthetic test users/runs were removed.
-   External recipient inbox placement/spam filtering is not proven by this self-test.
- - Browser verified all three languages and the fragment-to-form code handoff; raw
-   token disappears from the address bar. No raw token in the server URL/access log.
- - HTTPS/CSRF/private-file probes passed. Temporary authenticated cache-invalidation
-   endpoint was removed immediately; final scan confirmed no diagnostic endpoint remains.
- - Native PHP domain restart via devil www restart is unsupported (that command is for
-   Node/Python/Ruby). On symlink release changes, invalidate old/new index.php OPcache
-   entries in the web SAPI using a protected one-use operation, then remove it. CLI
-   OPcache is separate. Validate the actual new route/header before calling deploy done.
- - Code/public directories need 0755 and public asset files 0644; var/private state
-   must remain 0700, secrets 0600. A restrictive extraction umask also affects AssetMapper
-   output and FreeBSD symlink modes, so check public resource readability after deploy.
- - Email configuration/flow/operator commands and limitations: email-registration.txt.
- - The website has baseline safeguards, not a completed independent penetration test.
-   Apps/bots share one OS account: compromising that account can expose all its files.
+PHP release note:
+ devil www restart does not restart PHP domains. Changing symlink releases can require
+ targeted old/new index.php OPcache invalidation in the web SAPI, then immediate removal
+ of the protected one-use helper. CLI OPcache is separate. Always verify the new route.
+ Public code dirs/assets need 0755/0644, private state 0700 and secrets 0600; a restrictive
+ extraction umask affects FreeBSD symlink modes and AssetMapper output too.
 
-Authoritative references:
- https://pomoc.mydevil.net/Strona_WWW/
- https://pomoc.mydevil.net/PHP/
- https://pomoc.mydevil.net/Node.js/
- https://pomoc.mydevil.net/Python/
- https://pomoc.mydevil.net/Rezerwacja_portow/
- https://pomoc.mydevil.net/Cron/
- https://developers.deepl.com/api-reference/translate/request-translation
+References:
  https://pomoc.mydevil.net/PostgreSQL/
  https://pomoc.mydevil.net/Poczta/
- https://symfony.com/doc/7.4/mailer.html
- https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html
+ https://github.com/brianc/node-postgres/tree/master/packages/pg-native
+ https://www.psycopg.org/psycopg3/docs/basic/install.html
+ https://developers.deepl.com/api-reference/translate/request-translation

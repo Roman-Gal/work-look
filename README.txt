@@ -1,6 +1,6 @@
 WorkLook — приватний AI-агент пошуку роботи
 Стан на 2026-11-20: локальний MVP та ізольована демоверсія на MyDevil MD2.
-Демостенд: https://rh-additional.usermd.net/ . Справжні API-ключі та користувацькі дані не переносилися.
+Демостенд: https://rh-additional.usermd.net/ . Робочі Telegram/DeepL credentials і погоджені локальні дані перенесено на хост; боти активні.
 Дані нового тестового акаунта — тільки у локальному ігнорованому var/deploy/mydevil-demo-access.txt.
 Поточне розміщення, перевірки та режим очікування ботів: docs/mydevil-deployment.txt.
 
@@ -40,7 +40,11 @@ POST /language/{locale} захищений CSRF і повертає лише н�
 Команди нижче виконуються з каталогу work-look. PHP 8.2+; рекомендовано актуальний
 patch PHP 8.4. На цьому ПК php.exe розташований у C:\Php82\php.exe.
 MySQL Workbench є клієнтом адміністрування; він сам не замінює сервер MySQL.
-Локально використовується SQLite (файл var/worklook_dev.db), тому Workbench не потрібний.
+WorkLook і обидва активні боти використовують PostgreSQL на MyDevil.
+На цьому ПК .env.local налаштовано на ту саму БД через SSH-тунель localhost:8543;
+локальний вебсервер і workers зупинені. Робочих SQLite-файлів більше немає.
+Для ручного доступу: ssh -L 8543:pgsql93.mydevil.net:5432 RH-additional@s93.mydevil.net .
+Автотести використовують тільки ізольовану SQLite worklook_test; її можна прибрати після тестів.
 PDO SQLite, mbstring, XML/DOM/SimpleXML і залежності перевіряє Composer/runtime.
 
 Після нового копіювання репозиторію:
@@ -157,7 +161,7 @@ SMTP-помилки та блокування платного AI для нов�
 
 РОЗГОРТАННЯ MYDEVIL MD2
 
-Локально — SQLite; на MyDevil — PostgreSQL 16.16 та Messenger Doctrine transport.
+Runtime — PostgreSQL 16.16 на MyDevil та Messenger Doctrine transport. SQLite залишена тільки для ізольованих тестів.
 Усі демодані попередньої серверної SQLite перенесені та звірені. Email-реєстрація
 з підтвердженням адреси працює через SMTP MyDevil; нові акаунти мають деморежим.
 Нижче — загальні команди розгортання;
@@ -182,10 +186,11 @@ app:database:import-sqlite приймає консистентний знімо�
   php84 bin/console app:user:create your@email.example --env=prod --no-debug
 Worker запускати окремим процесом з обмеженнями часу/RAM і перезапуском засобами хоста.
 На демостенді cron запускає bounded worker під FreeBSD lockf; це обробка вже
-натиснутих кнопок, а не самостійний щогодинний пошук. Боти без зовнішніх ключів не запускаються.
+натиснутих кнопок, а не самостійний щогодинний пошук. Обидва боти активні з серверними credentials; їхні локальні ngrok-процеси вимкнено.
 Після оновлення коду: messenger:stop-workers та повторний запуск worker.
 
-Ngrok поки не запущений. Для зовнішнього перегляду спочатку потрібні prod env,
+Активні сайт і боти доступні на MyDevil; ngrok-версії збережено в окремих репозиторіях.
+Для іншого нового стенда потрібні prod env,
 довірений proxy для конкретного тунелю, правильний HTTPS session cookie та hostname.
 PHP built-in server і локальний dev env не є production-сервером.
 

@@ -1,7 +1,8 @@
 WorkLook — email registration and database operations
 2026-11-20
 
-Local development uses SQLite; hosting connection is selected by private DATABASE_URL.
+Runtime uses PostgreSQL; private DATABASE_URL selects the connection. Only isolated
+automated tests use SQLite. The PC development config uses an SSH tunnel to the host.
 MySQL Workbench is a MySQL client, not a database server or a PostgreSQL client.
 The current deployment and evidence are recorded in mydevil-deployment.txt.
 
