@@ -228,7 +228,7 @@ current. Docker is optional locally and is not a hosting requirement.
 | [Specification](docs/specification.txt) | Original goals and later product decisions |
 | [Research](docs/research/00-README.txt) | API/RSS findings, contracts, requests and dated evidence |
 
-Verified runtime: 9d4d29b. Later documentation-only commits do not require a new
+Verified runtime: 8b7295c (administration and activity statistics). Later documentation-only commits do not require a new
 application release. WorkLook test data was cleared on 24 November 2026, keeping
 the demo login/password. Telegram bots and their databases were preserved.
 
@@ -241,4 +241,5 @@ php84 bin/console app:reset-test-data --keep-user=demo@worklook.local --confirm=
 It deletes other WorkLook users and clears profiles, jobs, matches, runs and queue
 messages. It preserves the chosen login/password, verifies/enables the account and
 restores one free search. Bot databases are unaffected. Git restores code; deleted
-database contents require a separate backup.
+database contents require a separate backup. Once a separate administrator exists,
+the reset refuses to delete that administrator.

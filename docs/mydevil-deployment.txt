@@ -1,4 +1,40 @@
-CURRENT VERIFIED DEPLOYMENT — 2026-11-24
+CURRENT VERIFIED ADMINISTRATION RELEASE — 2026-11-24
+URL: https://rh-additional.usermd.net/
+Runtime: 8b7295c8e00447f4392538ecd2b6a26539bf7c5d.
+Previous runtime: 9d4d29bd0596aac645a4a5d445a0297a95bab303.
+
+Deployed and checked:
+ - Exactly one provisioned administrator: rh-additional@rh-additional.usermd.net.
+ - Private /admin statistics and /admin/users management in UA/PL/EN.
+ - Visit/authentication events and transactional administrator action audit.
+ - Local DB-IP Country Lite; PHP reader pinned to the host's MaxMind 1.14 extension.
+ - Real public client IP and country verified from HTTPS login records.
+ - Additive migration Version20261124160000 applied; no reset or data import.
+ - Existing users preserved; final app_user=3 (two existing plus the administrator).
+ - profile/agent_run/job/job_match/messenger_messages remain zero.
+ - Existing demo password login works; ordinary users receive 403 for /admin.
+ - Administrator login, event table, CSS assets, private no-store and CSP verified.
+ - One actual PHP WorkLook worker; previous cron entries preserved.
+ - WorkLook retention cron: daily 03:47 server time; GeoIP update: day 3 at 04:41.
+ - Telegram code, databases and cron unchanged; both gateways excluded from statistics.
+ - OpenAI key still absent; no live AI run or allowance consumption in these checks.
+ - WorkLook DB password kept unchanged at the owner's explicit request.
+ - Public deployment helpers and the remote initial-password file removed.
+ - Temporary SSH authorization revoked; fresh key-only login denied; local key pair removed.
+
+Pre-migration backup: worklook-20261124T150046Z.dump, archive list validated.
+Shared GeoIP directory: apps/work-look/shared/geoip (0700, MMDB 0600).
+Local administrator credentials: ignored var/deploy/worklook-admin-access.PRIVATE.txt.
+The file has an owner/SYSTEM/Administrators ACL; its password is not in Git/docs.
+Evidence: var/deploy/admin-validation-result.json, admin-web-result.json,
+admin-release-result.json and admin-final-result.json. Server evidence is private
+under apps/deploy-logs/. Runtime verification passed 54 tests / 420 assertions;
+13 focused tests / 108 assertions passed again with the host-compatible reader.
+Later documentation-only commits do not require a separate runtime deployment.
+
+The following is the earlier quota/reset deployment snapshot, not current user counts.
+
+PREVIOUS VERIFIED DEPLOYMENT SNAPSHOT — 2026-11-24
 URL: https://rh-additional.usermd.net/
 Runtime: 9d4d29bd0596aac645a4a5d445a0297a95bab303 (main archive).
 Later Git commits may update documentation only; the runtime code is this revision.
