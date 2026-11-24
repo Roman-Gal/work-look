@@ -1,83 +1,86 @@
-WorkLook: карта реалізації для наступної розробки
-2026-11-20
+WorkLook implementation map
+Originally recorded 2026-11-20; current deployment details: mydevil-deployment.txt.
 
-Потік
-Browser POST / (CSRF + User) -> DashboardController -> AgentRun(profile snapshot)
- -> StartAgentRun(runId,userId) -> Doctrine Messenger async
- -> StartAgentRunHandler(owner check) -> AgentRunner(run lock)
+Flow
+Browser POST / (CSRF + authenticated User)
+ -> DashboardController -> SearchAllowance + SearchLauncher
+ -> atomic allowance reservation, AgentRun(profile snapshot) and Doctrine Messenger dispatch
+ -> StartAgentRun(runId,userId) -> StartAgentRunHandler(owner check)
+ -> AgentRunner(run lock + database claim)
  -> OpenAiClient Responses -> function_call -> ToolExecutor -> function_call_output
- -> повторення до final message / cancellation / limit / failure.
-Turbo Frame періодично перечитує GET /runs/{id}; авторизація та owner-check залишаються
-на сервері. Turbo Drive вимкнено: звичайні навігації оновлюють nonce CSP цілого документа.
+ -> repeat until final message, cancellation, limit or failure.
+A Turbo Frame polls GET /runs/{id}; authentication and ownership remain server-side.
+Turbo Drive is disabled so full navigations refresh the document's CSP nonce.
 
-Зовнішній агент виконує тільки п'ять інструментів:
- get_my_profile() — факти поточного знімка, побажання, заголовок, джерела, поріг.
- search_jobs(source,keywords,page) — allowlist і бюджет; максимум 10 записів за запит.
- get_job_details(job_id) — лише вакансії, знайдені поточним запуском.
- save_job_match(job_id,score,reasons,gaps) — після читання; не для прострочених вакансій.
- prepare_cv(job_id,fact_ids) — збережений match вище/на порозі, повний опис,
-                             відомі у snapshot fact_id, без перефразування тексту.
-user_id не передається в model arguments. Ліміти забезпечені backend; рекомендації
-«переглянути до 4 вакансій / створити до 2 CV» є інструкціями моделі, а не окремими
-серверними квотами. Абсолютна верхня межа — загальний бюджет інструментів.
+The agent has exactly five tools:
+ get_my_profile(): snapshot facts, preferences, headline, sources and score threshold.
+ search_jobs(source,keywords,page): allowlist and budget; up to 10 jobs per request.
+ get_job_details(job_id): only jobs discovered by this run.
+ save_job_match(job_id,score,reasons,gaps): after reading details; no expired jobs.
+ prepare_cv(job_id,fact_ids): saved match at/above threshold, full description,
+                             known snapshot fact IDs, no rewriting of their text.
+user_id is never a model argument. The backend enforces limits. Instructions to
+review up to 4 jobs / prepare up to 2 CVs are model guidance, not separate server
+quotas; the hard bound is the total tool budget.
 
-Зберігання
+Storage
  User -> Profile (one-to-one).
- User -> AgentRun (request, model/tool counts, events, immutable profile snapshot).
- Job — спільні публічні дані, unique(source,external_id).
- AgentRun + Job -> JobMatch, unique(run_id,job_id); jobSnapshot заморожено при створенні.
- JobMatch містить selectedFactIds, score/reasons/gaps, ручний status.
- messenger_messages — queue async/failed. Транспорт не відсилає CV роботодавцю.
-Статуси AgentRun: queued/running/completed/failed/cancelled/limited.
-Статуси JobMatch: New/Reviewed/Applied/Skipped; Applied — лише позначка користувача.
-Детальний журнал заявок із датами/історією статусів ще не реалізовано.
+ User -> AgentRun: request, model/tool counters, events, immutable profile snapshot.
+ User.freeSearchRunId: null for an unused free search; the reserved/consumed run otherwise.
+ Job: shared public data, unique(source,external_id).
+ AgentRun + Job -> JobMatch: unique(run_id,job_id), jobSnapshot frozen at creation.
+ JobMatch: selectedFactIds, score/reasons/gaps and a manually selected status.
+ messenger_messages: async/failed queues; the transport does not send CVs to employers.
+AgentRun statuses: queued/running/completed/failed/cancelled/limited.
+JobMatch statuses: New/Reviewed/Applied/Skipped. Applied is a user's label only.
+A detailed application log with dates and status history is not implemented.
 
-Файли
- src/Agent/ — Responses client, strict JSON schemas tools, runner, executor.
- src/Source/ — fixed HTTPS client, SOLID JSON, DOU/Djinni RSS, catalog upsert.
- src/Entity/ — Doctrine-моделі. migrations/ — переносима початкова DBAL-схема.
- src/Controller/ — приватні сторінки, profile forms, CV PDF і статуси.
- src/Service/CanonicalCv.php — незалежна валідація фактів.
- src/Service/CvPdfRenderer.php — локальні TTF Zakon Text, вбудовані в PDF; font cache
- у приватному var/pdf-fonts/, remote/JS/PHP вимкнено, chroot лише var і каталог шрифту.
- assets/styles/fonts.css — чотири @font-face; assets/fonts/zakon/NOTICE.txt — походження.
- src/Message/, src/MessageHandler/ — фоновий вхід у runner.
- src/Command/ — приватне створення користувача, source check.
- src/EventSubscriber/ — nonce CSP та захисні заголовки.
- LocaleSubscriber (request priority 20) встановлює uk/pl/en з worklook_locale cookie.
- LanguageController: public POST із CSRF, cookie HttpOnly/SameSite=Lax, secure на HTTPS,
- redirect тільки на визначені UI paths. Cookie спільний для сторінок та Turbo polling.
- translations/messages.{uk,pl,en}.yaml — тексти UI, форм і progress; app.request.locale
- задає lang HTML і переклад шаблонів PDF. Факти CV не проходять через Translator.
- profileSnapshot.ui_locale фіксує мову нових AI-пояснень; schema migration не потрібна.
- templates/, assets/ — Twig та UX; без CDN, окремого SPA чи Node build.
- tests/ — SQLite integration + unit; зовнішні виклики mock.
- tools/router.php — лише локальний PHP development server.
+Code map
+ src/Agent/: Responses client, strict tool JSON schemas, runner and executor.
+ src/Source/: fixed HTTPS client, SOLID JSON, DOU/Djinni RSS and catalog upserts.
+ src/Entity/: Doctrine models; migrations/: portable DBAL schema migrations.
+ src/Controller/: private pages, profile forms, CV PDFs, statuses and webhook gateway.
+ src/Service/CanonicalCv.php: independent fact validation.
+ src/Service/SearchAllowance.php and SearchLauncher.php: transactional free-search debit.
+ src/Service/CvPdfRenderer.php: embedded local Zakon Text fonts, private var/pdf-fonts/
+ cache, remote/JS/PHP disabled, chroot restricted to var and the font directory.
+ assets/styles/fonts.css: four font faces; assets/fonts/zakon/NOTICE.txt: provenance.
+ src/Message/ and src/MessageHandler/: background entry into the runner.
+ src/Command/: private user creation, source diagnostics and explicit test-data reset.
+ src/EventSubscriber/: CSP nonces, the exact Turbo CSS hash and security headers.
+ LocaleSubscriber (priority 20): validates uk/pl/en from worklook_locale.
+ LanguageController: public CSRF-protected POST, HttpOnly/SameSite=Lax cookie,
+ secure over HTTPS, redirects only to known UI paths. Polling shares this cookie.
+ translations/messages.{uk,pl,en}.yaml: UI, forms and progress; app.request.locale
+ controls HTML lang and PDF headings. CV facts do not pass through Translator.
+ profileSnapshot.ui_locale fixes the language of new AI explanations without a migration.
+ templates/ and assets/: Twig/UX, without a CDN, separate SPA or Node build.
+ tests/: disposable SQLite integration/unit fixtures; external calls are mocked.
+ tools/router.php: local PHP development server only.
 
-Нормалізований запис адаптера (поточний код, не майбутній багатий DTO)
+Current normalized adapter record (not the richer proposed DTO)
  source, external_id, title, company, url, description,
  locations:string[], salaries:{min,max,currency,period,contract_type,gross_net,source_path}[],
  skills:string[], work_mode, completeness, expires_at.
-Search result: jobs[], next_page:int|null, coverage:partial|window|demo.
-SOLID public-api/offers/IT, query search.searchTerm; pages 0..2, pageSize 10.
-DOU vacancies/feeds/?search=; Djinni jobs/rss/?keywords=; обидва тільки page 0.
-GET cache 3600s (ключ endpoint+query), response cap 3 MB, no redirects/retry.
-Діагностичні source-check читають без запису вакансій у БД.
-Жодного довільного HTTP tool, HTML parser або scraper/browser fallback немає.
+Search result: jobs[], next_page:int|null, coverage:partial|window.
+SOLID: public-api/offers/IT, search.searchTerm, pages 0..2, pageSize 10.
+DOU: vacancies/feeds/?search=; Djinni: jobs/rss/?keywords=; both page 0 only.
+GET cache: 3600s, keyed by endpoint/query; 3 MB cap, no redirects/retries.
+Source diagnostics do not write jobs to the database. There is no arbitrary HTTP
+tool, HTML parser, scraper or browser fallback.
 
-Нормалізація зарплат не змінює валюту/період і не прирівнює B2B до UoP.
-Для RSS company/location/salary/work_mode залишені невідомими, навіть коли окремі
-слова зустрічаються в title. Відсутність в останньому RSS-вікні не означає видалення.
-Сирі payload не зберігаються у поточній БД: є нормалізовані дані та contentHash;
-evidence дослідницьких GET лежать окремо в research/evidence/.
+Salary normalization preserves currency/period and never treats B2B as UoP.
+RSS company/location/salary/work_mode remain unknown even when a title contains
+suggestive words. Absence from the latest RSS window does not mean deletion.
+Raw payloads are not stored in the current DB; normalized data and contentHash are.
+Research GET evidence is stored separately in research/evidence/.
 
-Наступні кроки після підключення ключа й реального профілю
-1. Один невеликий live run; перевірити відповіді моделі й якість search filters.
-2. Реальний прогін PostgreSQL migrations/queue на MyDevil, HTTPS/routing і restart worker.
-3. Crash recovery та транзакційний outbox для межі AgentRun/dispatch, quotas/rate limits
-   між користувачами й журнал змін статусів перед ширшим SaaS використанням.
-4. Контракт capabilities/DTO і детальні валідації optional-полів, paging/filter fixtures
-   та source-specific full-description proofs для розширення каталогу.
-5. Переклад/перефразування CV тільки з окремою перевіркою provenance; геокодинг/маршрути.
-6. Додаткові платформи лише після підтвердження API/RSS/партнерського доступу.
-Не підміняти ці кроки прихованим HTML scraping або вигаданими фактами.
+Next development steps
+1. Configure an API key and real profile; review one small live run and search quality.
+2. Add crash recovery, broader user rate limits and status-change history before SaaS use.
+3. Extend capability/DTO contracts, optional-field validation, paging/filter fixtures
+   and source-specific full-description checks.
+4. Add CV translation/rewriting only with provenance validation; later geocoding/routing.
+5. Add platforms only after confirming API/RSS/partner access.
+The PostgreSQL migration, native queue checks and hosted deployment are complete.
+Do not replace missing integrations with hidden scraping or invented CV facts.

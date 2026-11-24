@@ -1,21 +1,19 @@
-Контракт адаптерів і план першої реалізації
-Статус: початкова цільова специфікація контракту. Дата: 2026-11-20.
-Локальний Symfony MVP вже створено у ../../.
-Фактичний спрощений контракт: ../../docs/architecture.txt; команди — README.txt.
-Не всі запропоновані нижче DTO/поля/модулі вже реалізовані.
-API/RSS адаптери викликає AI-агент після натискання кнопки, не автономний scraper.
-Локально SQLite; PostgreSQL — майбутній хост. RSS summary-only не дозволяє генерацію CV.
+Adapter contract and first implementation plan
+Original target specification, 2026-11-20.
+The Symfony MVP is implemented; its simpler actual contract is ../architecture.txt.
+Commands: ../../README.md. Not every DTO/field/module below is implemented.
+Adapters are tools of a user-triggered AI agent, not an autonomous scraper.
+Current storage is shared MyDevil PostgreSQL. Summary-only RSS jobs cannot generate CVs.
 
-1. Межі першого етапу
+1. First-stage boundaries
 
-Вхід: HTTP JSON API або XML RSS із allowlist джерел.
-Вихід: нормалізовані вакансії у PostgreSQL із посиланням на первинне джерело.
-Початок: Symfony Console-команда для одного джерела й однієї сторінки, потім черга.
-Тут не передбачається жодного автоматичного відгуку чи завантаження CV роботодавцю.
-HTML всередині поля RSS/JSON дозволено очистити для збереження/показу;
-це не означає дозвіл перейти до HTML-скрапера самого сайту.
+Input: allowlisted HTTP JSON API or XML RSS.
+Output: normalized PostgreSQL vacancies linked to the original source.
+Initial implementation: one Console command/source/page, followed by queue integration.
+No automatic application or CV upload to an employer.
+Cleaning HTML embedded in RSS/JSON fields does not authorize scraping website pages.
 
-2. Пропонований контракт
+2. Proposed contract
 
 JobSourceAdapter:
   capabilities(): SourceCapabilities
@@ -37,12 +35,12 @@ JobDetailsResult:
   state=available|not_supported|forbidden|not_found|retry_later|schema_changed,
   job|null, warnings[].
 
-OpaqueCursor не змішує сторінки різних платформ. Для SOLID — pageIndex;
-для DOU/Djinni — window без next cursor; для JJIT поки unverified.
-Фільтри адаптера відокремити від локальних критеріїв користувача.
-Публічну вакансію забирати один раз для кількох користувачів, а match рахувати окремо.
+OpaqueCursor keeps platform paging models separate: SOLID uses pageIndex,
+DOU/Djinni use a window without a next cursor, and JJIT paging is unverified.
+Keep adapter filters separate from local user criteria. Fetch a public vacancy
+once for multiple users; calculate matches separately.
 
-3. Нормалізована вакансія
+3. Normalized vacancy
 
 source, external_id, source_url, apply_url?, first_seen_at, last_seen_at,
 published_at?, updated_at?, expires_at?, source_active?, content_hash,
@@ -56,69 +54,69 @@ salary_offers[] { min?, max?, currency?, period?, contract_type?, gross_net?,
                   is_estimate, original_text?, source_path },
 raw_payload_reference?, adapter_version, normalization_warnings[].
 
-Порожнє значення — null/unknown, не 0 і не припущення.
-Не додавати PLN/UAH лише за назвою сайту. Не порівнювати UoP brutto з B2B netto
-без окремої моделі розрахунку. Не множити погодинну ставку на 168 «автоматично».
-Зберігати оригінальний період, валюту й контракт поряд із похідними оцінками.
-Відсутність зарплати може бути unknown, а не автоматичний reject — залежить від профілю.
-Будь-які витягнуті AI факти про вакансію мають source_path/текстовий доказ.
+Missing values are null/unknown, not zero or assumptions. Do not infer PLN/UAH from
+a site's name, compare UoP gross to B2B net without a calculation model, or silently
+multiply hourly pay by 168. Preserve original period/currency/contract beside
+derived estimates. Missing salary can be unknown rather than automatic rejection,
+depending on the profile. AI-extracted job facts need source_path/text evidence.
 
-4. Надійність HTTP
+4. HTTP reliability
 
-Allowlist доменів і маршрутів; query збирати HTTP-клієнтом, не склеюванням введених URL.
-Ключі зовнішніх сервісів — лише backend env/secrets; не включати у Twig HTML, браузерні assets чи Git.
-Початкові наші caps, а не заявлені ліміти платформ: 1 запит одночасно на джерело,
-20–50 записів/сторінку де це підтримується, обмеження сторінок/часу на один запуск.
-Частота: SOLID/DOU/Djinni раз/годину як стартова пропозиція; Remotive не більше 4 разів/день.
-Уточнювати політику кожного джерела окремо.
+Allowlist domains/routes; build query parameters with the HTTP client, not user URLs.
+External keys belong only in backend secrets, never Twig HTML/browser assets/Git.
+Proposed initial application caps, not provider guarantees: one concurrent request
+per source, 20–50 jobs/page where supported, bounded pages/time per run.
+Original refresh proposal: SOLID/DOU/Djinni hourly; Remotive at most 4 requests/day.
+Current search is manual; per-source access/cache policies still apply.
 
-HTTP 304 — зберегти попередній payload; conditional GET використовувати, якщо сервер підтримує.
-429 — Retry-After або backoff із jitter, із загальним лімітом повторів.
-5xx/timeout — обмежені повтори; 401/403 — зупинити джерело, записати access_required.
-405 — неправильний метод; 404/410 detail — unavailable, а не краш усього ingestion.
-HTTP 200 з HTML, error-envelope чи зламаною схемою — schema_changed, не порожній успішний список.
-Не обходити challenge/403 проксі-ротацією. Перевірочна утиліта повторів узагалі не робить.
+304: retain the previous payload; use conditional GET if supported.
+429: honor Retry-After or bounded backoff with jitter.
+5xx/timeout: bounded retries in a future adapter policy.
+401/403: stop the source and record access_required.
+405: wrong method; 404/410 details: unavailable rather than a full ingestion crash.
+200 with HTML, error envelope or broken schema: schema_changed, not successful emptiness.
+Do not bypass challenges/403 using rotating proxies. The research utility never retries.
 
-Протидія повторенню сторінки: hash сторінки + IDs + перевірка поступу cursor.
-Повторна сторінка/завелике тіло/досягнутий бюджет → partial із warning; не complete.
-Неповний запуск або RSS-window не можуть масово позначити відсутні вакансії expired.
-RSS guid може бути URL; залишати fallback на canonical source URL.
-Дедуплікація всередині джерела: source + external_id. Між джерелами — окремий fingerprint
-з компанії/ролі/локацій і посилань; не губити список оригінальних джерел.
+Detect repeated pages through hashes, IDs and cursor progress. Repetition, oversized
+bodies or exhausted budgets yield partial + warning, not complete.
+Partial runs/RSS windows cannot mass-expire absent jobs.
+RSS guid may be a URL; keep canonical-source-URL fallback.
+Within-source identity: source + external_id. Cross-source deduplication needs a
+separate company/role/location/link fingerprint while preserving source references.
 
-5. Зберігання та користувачі
+5. Storage and ownership
 
-Спільними можуть бути лише публічні jobs/job_sources. Профілі, canonical CV, matches,
-версії CV, статуси applications та приватні файли належать user_id/tenant_id.
-У приватній задачі черги передавати scope і IDs; після завантаження сутності перевіряти власника.
-Версію профілю фіксувати при matching/tailoring; не прикладати CV іншого користувача або стару версію.
-Не використовувати лише непередбачуваність UUID як захист приватного файлу.
-Raw job payload зберігати з обмеженим retention і мінімізацією зайвих контактних полів.
+Only public jobs/job_sources are shared. Profiles, canonical CVs, matches, CV
+versions, application statuses and private files belong to user_id/tenant_id.
+Queue messages carry scope/IDs; check ownership after loading entities.
+Freeze the profile version for matching/preparation; never attach another user's
+CV or an unrelated old version. UUID unpredictability alone is not file authorization.
+Raw payloads need limited retention and minimization of unnecessary contact details.
 
-6. AI та CV
+6. AI and CVs
 
-Спочатку детерміновані фільтри, потім scoring, потім CV за налаштовуваним порогом.
-Summary-only job, як поточний robota sample, залишати NeedsDetails; генерацію CV відкласти.
-Навіть inline description перевіряти на достатність вимог для адаптації.
-Текст вакансії — недовірені дані, не інструкції агенту: він не може вимагати
-змінити правила, прочитати секрети чи додати кандидату навичку.
-Кожне твердження у CV посилається на fact_id у конкретній версії канонічного профілю.
-Переклад і перефразування дозволені, нові факти заборонені. Перед renderer перевіряти
-наявність fact_id; непідтверджені твердження відхиляти, не «виправляти» вигадкою.
-Зберігати changelog і версії source job/profile/prompt/model для відтворення результату.
+Apply deterministic filters before scoring and the configurable CV threshold.
+Keep summary-only jobs, such as the robota sample, as NeedsDetails; postpone CVs.
+Even inline descriptions need sufficient requirements for meaningful preparation.
+Vacancy text is untrusted data and cannot instruct the agent to change rules,
+read secrets or invent candidate skills.
+Each CV claim references fact_id in a specific canonical-profile version.
+The proposed future design allows translation/rewriting with no new facts; current
+code selects original facts only. Validate IDs before rendering and reject unsupported
+claims rather than inventing fixes. Preserve changelog and job/profile/prompt/model
+versions for reproducibility.
 
-7. Послідовність MVP після рішення почати код
+7. Original MVP sequence
 
-1) Symfony Console + HttpClient: SOLID.Jobs одна сторінка → normalized DTO → PostgreSQL.
-2) Перевірити два запуски: немає дублів; pageIndex=0/1 дають різні записи;
-   фільтр реально впливає на вибірку; всі null/optional коректно оброблені.
-3) DOU/Djinni RSS: очищення HTML-поля, guid fallback, window coverage, incomplete description.
-4) Messenger + контроль бюджету/повторів, журнал запусків, ручне ввімкнення джерел.
-5) UI на Symfony UX + Twig: вакансії, фільтри, профіль, New/Reviewed/Applied/Skipped.
-   Applied користувач встановлює вручну; цей статус сам по собі не надсилає заявку.
-6) Scoring → адаптація CV із fact_id → renderer → preview/download і ручна перевірка.
-7) Локальний reverse proxy + ngrok для перегляду; потім перенесення на хост.
+1) Console + HttpClient: one SOLID page -> normalized DTO -> PostgreSQL.
+2) Check deduplication, distinct pageIndex=0/1 results, real filters and optional/null fields.
+3) DOU/Djinni RSS: embedded HTML cleaning, guid fallback, window coverage, missing details.
+4) Messenger: budgets, retries, run log and explicit source enablement.
+5) Twig/UX dashboard, filters, profiles and New/Reviewed/Applied/Skipped statuses.
+   Applied is set manually and does not submit an application.
+6) Scoring -> provenance-checked CV facts -> renderer -> preview/download/manual review.
+7) Local reverse proxy/ngrok preview, then hosting.
 
-Значущі майбутні тести: контракт адаптерів на знеособлених fixtures, дубльована сторінка,
-429/403/некоректний JSON, ізоляція tenant, заборона непідтвердженого CV fact_id.
-Живі endpoints не робити обов'язковою частиною кожного CI: це окремий ручний smoke-check.
+Useful contract tests: anonymized fixtures, repeated pages, 429/403/bad JSON,
+tenant isolation and rejection of unknown CV fact IDs.
+Live endpoints belong in manual smoke checks, not every CI run.

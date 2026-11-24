@@ -1,4 +1,5 @@
 {
+    "description": "AI-assisted job search for Poland and Ukraine, with relevance scoring and fact-grounded PDF CVs.",
     "type": "project",
     "license": "proprietary",
     "minimum-stability": "stable",

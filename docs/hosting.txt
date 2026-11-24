@@ -1,95 +1,87 @@
-Спільний майбутній хост для проєктів і Telegram-ботів
-Зафіксовано: 2026-11-20, Europe/Warsaw.
+Shared hosting for WorkLook and Telegram bots
+Decision recorded 2026-11-20, Europe/Warsaw.
+Current verified deployment: mydevil-deployment.txt.
 
-Рішення користувача: після локальної розробки плануємо розмістити проєкти на MyDevil MD2.
-Назву й тариф користувач підтвердив у чаті. Розгортання буде окремим майбутнім етапом.
-Скрін тарифу збережено поруч: mydevil-md2-reference.png.
-Скрін є довідкою про пропозицію, а не інструкцією запускати чи купувати послуги.
+The owner selected MyDevil MD2 for the projects after local development.
+The plan screenshot is mydevil-md2-reference.png. It records an offer, not an
+instruction to purchase services or execute commands.
 
-1. Параметри
+1. Plan and limits
 
-Зі скріну: 40 PLN brutto/місяць, 50 GB SSD/NVMe, SSH, польська локація;
-заявлені transfer, кількість сайтів, email-акаунтів і БД — без ліміту.
-У таблиці MD2 додатково перевірено: RAM акаунта 2 GB, системних процесів 70.
-Доступні PHP, Python, Node.js та інші runtime; PostgreSQL, cron, технічна субдомена
-login.usermd.net, сертифікати Let's Encrypt. Це hosting account, не обраний Linux VPS.
-Першоджерело: [MyDevil — тариф і порівняння](https://www.mydevil.net/nasza-oferta/).
-Ціни й ліміти повторно звірити перед перенесенням; «без ліміту сайтів» не означає безлімітні RAM/CPU.
+The screenshot lists PLN 40 gross/month, 50 GB SSD/NVMe, SSH and a Polish location,
+with unmetered transfer, websites, mailboxes and databases. The MD2 comparison also
+listed 2 GB account RAM and 70 system processes when checked.
+PHP, Python, Node.js, PostgreSQL, cron, a login.usermd.net technical subdomain and
+Let's Encrypt certificates were available. This is a hosting account, not a Linux VPS.
+Source: https://www.mydevil.net/nasza-oferta/
+These are dated observations: verify prices/limits before changing plans.
+Unlimited websites do not imply unlimited CPU or RAM.
 
-2. Кілька проєктів різними мовами
+2. Projects in different languages
 
-Різні мови не заважають співіснуванню: кожен проєкт має свій каталог, залежності,
-конфігурацію, секрети, логи й спосіб запуску. Вебпроєктам призначати окремі subdomains.
-Symfony використовує Composer/vendor; Python-бот — окреме virtualenv;
-Node.js-бот — власний package lock і node_modules з відповідною версією Node.
-virtualenv ізолює залежності Python, але не є заміною окремим системним акаунтам.
-Нативні розширення та binary-залежності перевіряти на сумісність із середовищем хостингу.
+Each project has its own directory, dependencies, configuration, secrets, logs and
+startup method. Web projects may use separate subdomains. Symfony uses Composer/vendor;
+Python uses a separate virtualenv; Node uses its own package lock/node_modules and
+runtime version. A virtualenv isolates dependencies, not OS-level access.
+Check native extensions/binaries against the host's actual platform.
 
-Можливість multi-site описана в [Strona WWW](https://pomoc.mydevil.net/Strona_WWW/).
-[Python/virtualenv](https://pomoc.mydevil.net/Python/),
-[Node.js](https://pomoc.mydevil.net/Node.js/), [PHP](https://pomoc.mydevil.net/PHP/).
+https://pomoc.mydevil.net/Strona_WWW/
+https://pomoc.mydevil.net/Python/
+https://pomoc.mydevil.net/Node.js/
+https://pomoc.mydevil.net/PHP/
 
-Попередня оцінка: кілька невеликих ботів та Symfony-застосунок можуть співіснувати.
-Кількість проєктів не гарантуємо за диском 50 GB: виміряти сумарні RAM, процеси, CPU,
-паралельність задач і обсяг логів. Важкі PDF/AI задачі обмежувати окремими бюджетами.
-Обчислення LLM для Агента 2 плануються через зовнішні API, не як локальна велика модель.
+Several small bots and Symfony can coexist, but disk space alone does not establish
+capacity. Measure combined RAM, processes, CPU, concurrency and logs. Bound heavy
+PDF/AI work. WorkLook calls external LLM APIs rather than hosting a large local model.
 
-3. Чи потрібна власна доменна назва
+3. Domains
 
-Купувати власний домен для початку не обов'язково: провайдер надає login.usermd.net.
-Згодом один власний домен можна зареєструвати окремо й використовувати його піддомени:
-  jobs.example.com — Агент 2, Symfony UX + Twig;
-  bots.example.com — вебхуки/панелі ботів;
-  portfolio.example.com — портфоліо, якщо буде потрібне.
-Це лише приклади, не обрані та не зареєстровані адреси.
-Окремий платний домен для кожного проєкту чи бота не потрібний.
-Для вебадрес налаштовуються DNS, сайт у панелі хостингу та HTTPS.
-[SSL / Let's Encrypt](https://pomoc.mydevil.net/SSL/).
+A purchased domain is optional initially: the provider supplies login.usermd.net.
+Later one domain can serve multiple subdomains, for example:
+ jobs.example.com: WorkLook
+ bots.example.com: bot webhooks/panels
+ portfolio.example.com: an optional portfolio
+These are examples, not registered/selected addresses. A separate paid domain is
+not required for each project or bot. Configure DNS, the hosting website and HTTPS.
+https://pomoc.mydevil.net/SSL/
 
-Telegram long polling (getUpdates): бот сам звертається до Telegram, публічна вхідна
-адреса й власний домен не потрібні; потрібні працюючий процес та перезапуск після збою.
-Telegram webhook: потрібний доступний HTTPS endpoint. Власний придбаний домен не обов'язковий —
-можна використати адресу провайдера з HTTPS. Різні боти можуть мати різні URL paths одного host.
-Polling і webhook не вмикати одночасно для одного бота.
-[Telegram Bot API](https://core.telegram.org/bots/api#getting-updates).
+Telegram long polling (getUpdates) makes outgoing requests and needs no public
+inbound URL, but does need a persistent process and restart strategy.
+Webhooks need a reachable HTTPS endpoint; the provider's hostname is sufficient.
+Different bots can use different URL paths on one host. Do not enable polling and
+a webhook simultaneously for the same bot.
+https://core.telegram.org/bots/api#getting-updates
 
-4. Контейнери та процеси
+4. Containers and processes
 
-Docker не є вимогою для співіснування PHP/Python/Node.js. План для MD2 — нативне
-розгортання через SSH, доступні runtime й засоби провайдера. Підтримку Docker daemon/Compose
-в тарифі не підтверджено; не будувати production deployment на такому припущенні.
-SSH сам по собі не означає наявність root чи можливість встановити Docker.
-Документація провайдера описує власне ПЗ через [Binexec](https://pomoc.mydevil.net/Binexec/).
+Docker is not required for PHP/Python/Node coexistence. MD2 deployment is native,
+using SSH, installed runtimes and provider tools. Docker daemon/Compose support was
+not confirmed, so production does not depend on it.
+Docker Compose is optional locally; container hosting would need a platform with
+explicit support, such as a suitable Linux VPS.
+https://docs.docker.com/engine/install/
 
-Docker Compose можна використати локально як зручне середовище розробки; рішення про нього
-ще не прийнято. Якщо пізніше буде потрібне саме контейнерне розгортання, окремо розглядати
-Linux VPS/платформу із заявленою підтримкою Docker. Код застосунку не прив'язувати до Docker.
-[Платформи Docker Engine](https://docs.docker.com/engine/install/).
+Bots and Messenger workers run independently of HTTP requests. Provide restart,
+startup after reboot and RAM/concurrency limits. screen/nohup alone is not a restart
+supervisor. Use cron with a lock to prevent duplicate workers.
+https://pomoc.mydevil.net/Cron/
+Passenger's web-app idle/restart behavior does not supervise a polling bot.
+Validate long-running versus bounded cron workers on the account.
 
-Фонові боти й Messenger workers мають запускатися окремо від HTTP-запиту.
-Потрібно спроєктувати restart, автозапуск після reboot і обмеження RAM/паралельності.
-Не вважати screen/nohup повноцінним контролером перезапуску.
-Для періодичних задач доступний [cron](https://pomoc.mydevil.net/Cron/);
-використовувати lock, щоб не запускати дублікати процесу.
-Passenger керує вебзастосунками; його idle/restart поведінка не замінює керування polling-ботом.
-Режим довгого worker або коротких bounded-запусків з cron перевірити на акаунті перед production.
+5. WorkLook deployment
 
-5. Вплив на Агента 2
+Symfony UX/Twig lives in the same application. The only web root is public/;
+private CVs remain outside it. Use provider PostgreSQL, Doctrine Messenger and a
+managed CLI worker. DATABASE_URL and runtime paths are environment configuration;
+Docker service names such as postgres are not fixed production hosts.
+https://pomoc.mydevil.net/PostgreSQL/
+Verify PDF binaries/libraries on FreeBSD rather than assuming Linux Chromium works.
+Job-source GET research: research/00-README.txt.
 
-Обраний UI: Symfony UX + Twig у тому самому застосунку.
-На MD2: PHP-сайт, web root лише на Symfony public/, приватні CV поза публічним каталогом;
-PostgreSQL провайдера; Messenger із Doctrine transport; cron/керування CLI-воркером.
-DATABASE_URL і runtime paths — конфігурація середовища. Не використовувати Docker service names
-на кшталт postgres як фіксовані production hosts.
-[PostgreSQL MyDevil](https://pomoc.mydevil.net/PostgreSQL/).
-PDF renderer вибирати з перевіркою сумісності доступних бібліотек/binaries; не припускати,
-що Linux Chromium із локального контейнера запуститься нативно на хостингу.
-Результати GET-дослідження job-джерел: research/00-README.txt.
-
-Оновлення 2026-11-20: на https://rh-additional.usermd.net/ розгорнуто ізольовану
-демоверсію WorkLook (PHP 8.4, нова SQLite, cron/lockf worker). Код обох ботів та
-залежності встановлено в окремих каталогах; зовнішні ключі — заглушки, процеси
-ботів не активовано. За рішенням користувача реальні дані/доступи не переносили,
-чинні Telegram webhooks і локальні боти не змінювали. Для українізатора обрано
-DeepL API замість локального LibreTranslate; інтеграцію перевірено з mock HTTP.
-Фактичний стан і перевірки: docs/mydevil-deployment.txt у репозиторії work-look.
+Historical first deployment, 2026-11-20: an isolated SQLite demo was launched, bot
+code/dependencies installed with placeholder credentials, and bot processes left
+inactive while private transfers were withheld. DeepL was chosen instead of local
+LibreTranslate and initially tested using mock HTTP.
+That initial state was superseded: all three apps now use PostgreSQL, bot credentials
+were transferred with permission, and both bots are active. WorkLook's final quota
+deployment/reset completed on 2026-11-24. See mydevil-deployment.txt for verified facts.

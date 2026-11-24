@@ -1,75 +1,89 @@
-# Специфікація Агента 2: Пошуковик роботи (Польща) та Адаптер CV
+Agent 2 specification: Job Search for Poland and CV Preparation
+Recorded 2026-11-20. Implementation was authorized; the MVP is in this repository.
 
-Збережено: 2026-11-20.
-Статус: реалізацію дозволено користувачем; локальний MVP у корені цього репозиторію.
-Пізніші рішення користувача мають пріоритет над початковим текстом нижче:
-- Symfony 7.4 LTS + Symfony UX/Twig, без Angular.
-- Кнопка вручну запускає AI-агента, який обирає пошукові запити та викликає API/RSS tools.
-- Автономний scraper і автоматичний розклад пошуку не потрібні на цьому етапі.
-- Локально SQLite; майбутній хост MyDevil MD2, план PostgreSQL і нативні workers.
-- Реалізація, запуск та обмеження: README.txt, docs/architecture.txt.
-Нижче збережено початкову специфікацію як цільовий розвиток, не перелік готових функцій.
+Later owner decisions take precedence over the original proposal below:
+- Symfony 7.4 LTS + Symfony UX/Twig; no Angular.
+- A user button starts a bounded AI agent that chooses queries and API/RSS tools.
+- No autonomous scraper or scheduled searches in this phase.
+- One shared PostgreSQL on MyDevil for hosted/local development via SSH; native workers.
+- Actual implementation and limits: ../README.md and architecture.txt.
+The original specification describes future direction, not a checklist of finished features.
 
-## 1. Мета та архітектура проєкту
+1. Purpose and architecture
 
-Приватний сервіс / агентський пайплайн (з перспективою масштабування в мультикористувацький пет-проєкт/SaaS), який регулярно збирає вакансії на польському ринку праці, фільтрує їх під вимоги користувача, адаптує резюме (CV) під конкретну вакансію без вигадування фактів, готує пакет матеріалів і формує структурований звіт.
+A private service/agent pipeline, potentially evolving into a multi-user pet project
+or SaaS, gathers Polish-market vacancies, filters them against user requirements,
+prepares vacancy-specific CVs without inventing facts, and produces a report.
+Regular autonomous collection was part of the original proposal; the current
+user-triggered workflow supersedes that scheduling assumption.
 
-## 2. Рекомендована архітектура системи
+2. Proposed modules
 
-Розділяємо систему на незалежні модулі/воркери через чергу задач і реляційну БД:
+Independent modules/workers communicate through a task queue and relational storage:
+- Ingestion: adapters for JustJoinIT, NoFluffJobs, Pracuj.pl, Bulldogjob, The Protocol
+  and others. Scheduled collection belongs to the original future proposal.
+- PostgreSQL storage:
+  users/user_profiles: structured canonical CV (JSON/Markdown), desired salary,
+  work mode, starting address/location, languages and filter criteria.
+  job_sources/jobs: source + external_id or URL identity, raw payload, normalized
+  fields and processing status.
+  job_matches: relevance score/explanation, commute distance/time and CV reference.
+  applications_log: prepared/submitted materials, CV version and application status.
+- Matching/scoring: compare vacancies to a user profile and discard poor matches.
+- CV preparation/renderer: prepare a targeted document and render it, for example
+  through HTML/CSS-to-PDF or Typst.
+- Reporting/notifications: a table/dashboard and optional Telegram/web notifications
+  for manual review and submission.
 
-- **Ingestion Worker (Збір даних):** адаптери під різні джерела вакансій (`JustJoinIT`, `NoFluffJobs`, `Pracuj.pl`, `Bulldogjob`, `The Protocol` тощо). Працює за розкладом (cron / scheduler).
-- **Storage (PostgreSQL):**
-  - `users` / `user_profiles` (базове CV у структурованому вигляді JSON/Markdown, бажана зарплата, формат роботи, локація/адреса старту, мови, критерії фільтрації).
-  - `job_sources` та `jobs` (унікальний ключ `source + external_id` або `url`, raw payload, нормалізовані поля, статус обробки).
-  - `job_matches` (оцінка релевантності, пояснення, відстань/час доїзду, посилання на згенероване CV).
-  - `applications_log` (звітність: що підготовлено/надіслано, яка версія CV, статус).
-- **Matching & Scoring Agent:** оцінює відповідність вакансії профілю користувача та відсіює нерелевантні позиції.
-- **CV Adaptation & Renderer:** створює цільову версію CV під опис вакансії та рендерить у готовий файл (наприклад, PDF через HTML/CSS шаблони або Typst).
-- **Reporting & Notification Module:** формує звіти (таблиця/дашборд + сповіщення, наприклад у Telegram або веб-інтерфейсі) для ручної перевірки та відправки користувачем.
+3. Sources: API endpoints versus parsing
 
-## 3. Підходи до джерел вакансій (API / ендпоінти vs парсинг)
+Portals change frontend/backend architecture and anti-bot controls; each source
+needs a separate adapter with a clear contract.
 
-На польському ринку праці підходи відрізняються залежно від порталу та його актуальної frontend/backend-архітектури (оскільки портали періодично оновлюють API та антибот-захист, кожен адаптер варто виносити в окремий модуль із чітким контрактом):
+JSON/REST/GraphQL:
+Modern boards may load listings/details through public or internal JSON APIs or
+feeds. Structured responses are simpler to process than HTML. Use correct headers,
+rate limits, paging and schema-change handling. An internal endpoint is not
+automatically a supported public contract.
 
-1. **JSON / REST / GraphQL ендпоінти SPA-застосунків:**
-   - Багато сучасних IT-бордів у Польщі (зокрема `JustJoinIT`, `NoFluffJobs` та нішеві дошки) підвантажують списки вакансій і деталі через внутрішні/публічні JSON API або структуровані фіди.
-   - *Перевага:* швидше, легше й стабільніше, ніж парсити HTML.
-   - *Вимога до агента/адаптера:* коректні заголовки запитів, повага до rate limits, обробка пагінації та падінь схеми відповіді (fallback на headless browser).
-2. **HTML / Headless Browser (`Playwright`):**
-   - Використовується для порталів з рендерингом на клієнті, складними фільтрами або захистом від простих HTTP-клієнтів (наприклад, частини сторінок `Pracuj.pl` чи агрегаторів).
-3. **Робота з геолокацією / відстанню до роботи:**
-   - Для офісних або гібридних вакансій у Польщі корисно витягувати місто/район або координати і рахувати відстань/час у дорозі від базової точки користувача (через геокодинг + routing API, наприклад OpenRouteService / Google Maps), додаючи це поле у звіт.
+HTML/headless browser:
+The original proposal allowed Playwright for client-rendered pages and complex
+filters, including parts of Pracuj.pl. The later decision postpones all HTML
+scrapers and browser fallback; use APIs/structured RSS only in the current phase.
 
-## 4. Логіка AI-агентів (Scoring + CV Tailoring)
+Geolocation/commute:
+Future office/hybrid matching may extract city/district/coordinates and calculate
+distance/time from the user's starting point through a geocoder and routing API,
+such as OpenRouteService or Google Maps. Include the result in reports.
 
-1. **Агент оцінки вакансії (Matcher):**
-   - Вхід: нормалізована вакансія + профіль користувача.
-   - Вихід (JSON schema): `match_score` (0–100), `reasons_for_fit`, `missing_skills_or_red_flags`, `salary_info`, `work_mode`, `location`.
-   - Вакансії нижче порогу релевантності не витрачають токени на генерацію CV.
-2. **Агент адаптації CV (CV Tailorer) — жорсткі анти-галюцинаційні правила:**
-   - Вхід: структуроване «канонічне CV» користувача + текст вакансії.
-   - Дозволено: переставляти акценти, переформульовувати буліти досвіду під термінологію вакансії, підсвічувати релевантні проєкти/навички, адаптувати мову CV (наприклад, польська або англійська — залежно від вимог вакансії).
-   - **Категорично заборонено:** вигадувати досвід, компанії, ролі, сертифікати, роки стажу або навички, яких немає в канонічному CV користувача. Усі факти мають мати прив’язку до джерела в базовому профілі.
+4. AI scoring and CV preparation
 
-## 5. Звітність та майбутній перехід у Pet-Project / SaaS
+Matcher input: normalized vacancy + user profile.
+Proposed JSON output: match_score (0–100), reasons_for_fit,
+missing_skills_or_red_flags, salary_info, work_mode, location.
+Do not spend CV-generation tokens on matches below the relevance threshold.
 
-- **Формат звіту по кожній підібраній вакансії:**
-  - Назва посади та компанія.
-  - Пряме посилання на вакансію.
-  - Зарплатна вилка та тип контракту (якщо вказано, напр. `UoP`, `B2B`).
-  - Локація / формат (`remote`, `hybrid`, `office`) + відстань/час доїзду від заданої точки.
-  - Прикріплений/згенерований файл CV (та короткий changelog змін у CV).
-  - Статус (`New`, `Reviewed`, `Applied`, `Skipped`).
-- **Готовність до масштабування (ізоляція даних користувачів):**
-  - З самого початку проектувати БД і пайплайни з `user_id` / `tenant_id`, щоб завантаження CV, налаштування фільтрів і черги задач легко масштабувалися на кількох користувачів без переписування ядра.
+CV input: structured canonical CV + vacancy description.
+The original future design allows reordering emphasis, rewriting experience bullets
+in vacancy terminology, highlighting relevant projects/skills and adapting language
+to Polish or English. Current code selects/reorders original facts only.
+Never invent experience, companies, roles, certificates, years of experience or
+skills absent from the canonical CV. Every fact must refer to the base profile.
 
-## Доповнення 2026-11-20: дослідження перед реалізацією
+5. Reporting and multi-user growth
 
-- Додано українські джерела: Djinni, DOU, Work.ua, robota.ua; проаналізовано API/RSS та обмеження доступу.
-- Поточна фаза — лише API/структуровані RSS через HTTP. HTML-скраперів і headless-browser fallback поки не створювати.
-- Спочатку локальний запуск; UI/веб-перегляд через ngrok, пізніше перенесення на обраний MyDevil MD2.
-- MyDevil MD2 планується як спільний хост для проєктів і Telegram-ботів різними мовами; план — infrastructure/future-hosting.txt. Контейнери не є обов'язковою умовою; на MD2 плануємо нативне розгортання.
-- UI затверджено користувачем: Symfony UX + Twig. Angular відхилено. Backend: PHP + Symfony; рекомендована гілка — 7.4 LTS.
-- Міні-документація, результати живих GET-перевірок та приклади запитів: agent-2-research/00-README.txt.
-- Збережена специфікація залишається основою; конкретні маршрути джерел перевіряти за свіжими evidence перед написанням адаптера.
+Each selected vacancy should show position/company, direct URL, salary range and
+contract (for example UoP/B2B), location/work mode (remote/hybrid/office), future
+commute metrics, a generated CV and short change log, and a status:
+New, Reviewed, Applied or Skipped.
+
+Design user_id/tenant ownership from the start so profile uploads, filters and
+queues can grow to multiple users without rewriting the core.
+
+Research additions, 2026-11-20:
+- Include Djinni, DOU, Work.ua and robota.ua in API/RSS access research.
+- Current integration phase uses HTTP JSON APIs and structured RSS only.
+- Develop locally; ngrok may expose the UI for review; host on MyDevil MD2.
+- Multiple languages/bots share native hosting; containers are optional.
+- Research, live GET evidence and HTTP examples: research/00-README.txt.
+- Recheck source evidence before implementing adapters; do not invent endpoints.

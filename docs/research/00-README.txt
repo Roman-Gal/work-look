@@ -1,52 +1,47 @@
-Агент 2 — технічне дослідження та локальний MVP
-Дата перевірки: 2026-11-20, Europe/Warsaw.
+Agent 2: technical research and the WorkLook MVP
+Research checked 2026-11-20, Europe/Warsaw.
+Current application/deployment state: ../../README.md and ../mydevil-deployment.txt.
 
-Початкова специфікація: ../specification.txt.
-Поточний етап: локальний MVP створено у ../../.
-Актуальні команди, реалізація й обмеження: ../../README.txt та docs/architecture.txt.
-Пошук стартує вручну кнопкою: AI обирає queries/tools, Messenger обробляє запуск у фоні.
-Автоматичного пошуку за розкладом немає; API/RSS адаптери є інструментами агента.
-Реалізовано SOLID.Jobs, DOU RSS і Djinni RSS; їхні GET перевірено також через Symfony CLI.
-Локально SQLite; PostgreSQL заплановано для MyDevil. AI-протокол перевірено mock API;
-справжній платний запуск потребує API-ключа та справжнього профілю користувача.
-UI затверджено користувачем: Symfony UX + Twig. Angular відхилено.
-Майбутній хост затверджено: MyDevil MD2; спільний план — ../hosting.txt.
-Symfony 7.4 LTS, UX/Twig, Messenger Doctrine вже встановлено; перенесення на хост попереду.
+Original specification: ../specification.txt. The Symfony MVP lives at ../../.
+A user button starts the AI agent; it chooses queries/tools while Messenger runs
+the task in the background. API/RSS adapters are tools, not autonomous scrapers.
+SOLID.Jobs, DOU RSS and Djinni RSS are implemented and were checked through Symfony CLI.
+The original local SQLite stage has been superseded by shared MyDevil PostgreSQL.
+AI protocol tests use mock HTTP; a real paid run needs an API key and real profile.
+Chosen UI: Symfony UX + Twig, without Angular. Hosting: MyDevil MD2, native workers.
 
-Що читати:
-- 01-stack-and-hosting.txt — Symfony UX + Twig, backend, локальний запуск і хостинг.
-- 02-job-sources.txt — польські й українські платформи, доступні запити, результати перевірок.
-- 03-adapter-contract.txt — контракт адаптера, нормалізація, обробка помилок і порядок MVP.
-- requests.http — окремі запити для HTTP-клієнта IDE; виконувати вибірково.
-- probe_get.py — повторювана одноразова перевірка GET через curl, без сторонніх Python-пакетів.
-- evidence/*.json — час, URL, HTTP-статус, тип даних, структура відповіді та контрольна сума.
+Reading guide
+- 01-stack-and-hosting.txt: backend/UI decisions, local workflow and hosting.
+- 02-job-sources.txt: Polish/Ukrainian platforms, requests and observed responses.
+- 03-adapter-contract.txt: proposed contract, normalization, errors and MVP sequence.
+- requests.http: individual IDE HTTP-client examples; execute selectively.
+- probe_get.py: repeatable one-shot curl GET checks without third-party Python packages.
+- evidence/*.json: timestamp, URL, HTTP status, content type, shape and checksum.
 
-Пропозиція:
-1. Backend: PHP + Symfony 7.4 LTS, PostgreSQL, Messenger із Doctrine transport.
-2. Обраний UI: Twig + Symfony UX у тому самому Symfony-застосунку.
-   Кабінет, профіль, ручний запуск, прогрес і результати вже реалізовано.
-3. Перший польський адаптер: офіційний SOLID.Jobs API; перші українські — DOU RSS і Djinni RSS.
-4. JustJoinIT/NoFluffJobs — окремі експериментальні адаптери; HTTP-доступ не дорівнює
-   документованому контракту чи погодженому регулярному експорту.
+Selected approach
+1. PHP/Symfony 7.4 LTS, PostgreSQL and Messenger's Doctrine transport.
+2. Twig/UX in one Symfony app; dashboard, profile, manual start and results exist.
+3. Start with public SOLID.Jobs JSON and DOU/Djinni RSS.
+4. Keep JustJoinIT/NoFluffJobs experimental: HTTP access alone is not a documented
+   contract or permission for regular export.
 
-Важливо для наступної розробки:
-- У цій фазі використовуємо JSON API та XML RSS. HTML-скраперів і Playwright fallback немає.
-- GET до HTML-сторінки та витягування JSON-LD/__NEXT_DATA__ — це теж парсинг сторінки;
-   такий шлях не входить у поточний scope.
-- probe_get.py — дослідницька утиліта, не рішення про Python backend і не ingestion worker.
-- HTTP 200 + JSON ще не перевіряє семантику фільтрів, повноту опису, пагінацію та актуальність вакансії.
-- structured_success в evidence означає лише: GET завершено, HTTP 200, JSON/RSS розібрано.
-  Це не повна сертифікація адаптера; схеми показують один елемент, а не всі можливі варіанти.
-- Сторінки офіційної документації переглянуто в браузинговому інструменті;
-  фактичні API/RSS запити виконано з цього комп'ютера через curl без логіна й cookies.
+Development boundaries
+- This phase uses JSON API and XML RSS, without HTML scrapers or Playwright fallback.
+- Extracting JSON-LD/__NEXT_DATA__ from an HTML page is still page parsing and is
+  outside the current scope.
+- probe_get.py is research tooling, not a Python backend or ingestion worker.
+- HTTP 200 + JSON does not establish filters, paging, full descriptions or freshness.
+- structured_success means only a finished GET, HTTP 200 and parsed JSON/RSS.
+  Evidence shapes describe a sample item, not every possible response variant.
+- Official documentation was read with browsing tools; actual API/RSS requests
+  were sent from the local computer through curl without login/cookies.
 
-Повторна локальна перевірка з кореня репозиторію work-look:
+Repeat selected checks from the repository root:
   python docs/research/probe_get.py solidjobs dou djinni
 
-Кожен вибраний target робить один GET, без автоматичних повторів і переходів за редиректами.
-Початковий ліміт тіла відповіді — 5 MB; таймаут запиту — 25 секунд.
-Утиліта перезаписує evidence для вибраного target; історію зберігати окремо перед наступним аудитом.
-Код виходу 1 означає, що хоча б один endpoint не пройшов структурну перевірку.
-Не запускати всі endpoints циклічно: це ручний дослідницький інструмент.
-
-Жодних розкладів, ngrok-тунелів, відгуків на вакансії чи зовнішніх повідомлень не запущено.
+Each selected target makes one GET with no automatic retries or redirect following.
+The default response cap is 5 MB and timeout is 25 seconds.
+The utility overwrites evidence for selected targets; preserve prior audit history
+separately if needed. Exit 1 means at least one target failed structural validation.
+Do not poll every endpoint repeatedly; this is a manual research utility.
+Research checks started no schedules, ngrok tunnels, job applications or messages.

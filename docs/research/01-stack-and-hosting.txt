@@ -1,112 +1,100 @@
-Стек та розміщення
-Дата: 2026-11-20. UI затверджено користувачем: Symfony UX + Twig; Angular відхилено.
-Майбутнє розміщення затверджено: MyDevil MD2; спільний план — ../hosting.txt.
-Оновлення реалізації: ../../README.txt.
-Локальний MVP: Symfony 7.4 LTS + Twig/UX + SQLite + Messenger Doctrine transport.
-На майбутньому MyDevil — PostgreSQL. MySQL Workbench не є сервером MySQL.
-Пошук запускається лише кнопкою; AI викликає API/RSS tools у bounded циклі.
-Scheduler/cron для автономного пошуку не створено. Cron надалі може керувати worker.
-Нижче збережено початковий аналіз; фактичний код і його межі описано у ../../docs/architecture.txt.
+Stack and hosting decisions
+Original analysis: 2026-11-20.
+Chosen UI: Symfony UX + Twig; Angular was rejected. Chosen host: MyDevil MD2.
+Current code/state: ../../README.md, ../architecture.txt, ../mydevil-deployment.txt.
+The initial local SQLite plan has been superseded by one shared PostgreSQL on
+MyDevil, accessed locally through SSH. Search remains user-triggered; cron manages
+the queue worker, not autonomous searches.
 
-1. Мова та backend
+1. Language and backend
 
-Для описаного сервісу рекомендую PHP із Symfony. Основна робота тут — HTTP-запити,
-нормалізація даних, БД, фонові задачі та інтеграція з LLM API. Для цього Python не обов'язковий.
-Навчання моделей локально зараз не передбачено.
+PHP with Symfony fits HTTP integration, normalization, storage, background jobs
+and LLM APIs. Local model training is outside this project.
 
-Варіант                 Коли обирати                       Компроміс для нашого проєкту
-PHP + Symfony           PHP знайомий; потрібен SaaS         Добре вкладається в бізнес-логіку й воркери.
-Python + FastAPI        Основний фокус — ML/обробка даних    Потрібно окремо скласти auth, ORM і черги.
-TypeScript + NestJS     Основна мова проєкту — TypeScript   Альтернатива backend; зараз не обрана.
+Option               Suitable focus                       Project trade-off
+PHP + Symfony        Familiar PHP and SaaS business logic  Fits services and workers.
+Python + FastAPI     ML/data-processing focus             Auth/ORM/queue need assembly.
+TypeScript + NestJS  Primarily TypeScript projects         Valid alternative, not selected.
 
-Це інженерна оцінка відповідності задачі, а не бенчмарк продуктивності фреймворків.
-Вибирати Python лише через слово «агент» причин немає. Окремий Python worker можна
-додати пізніше, якщо з'явиться конкретна залежність для ML чи обробки документів.
+This is an engineering fit assessment, not a framework performance benchmark.
+An agent does not inherently require Python. A separate Python worker can be added
+later for a concrete ML/document dependency.
 
-Базова версія: Symfony 7.4 LTS. Офіційно вимагає PHP >= 8.2; виправлення помилок
-передбачені до листопада 2028, безпеки — до листопада 2029. Пропонований runtime:
-актуальний patch PHP 8.4; Docker локально — опція, на MyDevil плануємо нативний запуск.
-На комп'ютері виявлено PHP CLI 8.2.8; його виявлення
-використано для локальної розробки; для хоста обрати актуальний patch PHP 8.4.
-Джерело: [Symfony releases](https://symfony.com/releases).
+Baseline: Symfony 7.4 LTS, PHP >=8.2. The release schedule checked during research
+listed bug fixes through November 2028 and security fixes through November 2029.
+Use an appropriate PHP 8.4 patch for hosting. Local PHP CLI was 8.2.8.
+Docker is optional locally; MyDevil deployment is native.
+https://symfony.com/releases
 
-2. Архітектура першої версії
+2. First-version architecture
 
-Один модульний Symfony-застосунок, одна БД і окремі процеси воркерів з того самого коду.
-Модулі: Ingestion, Matching, Cv, Reporting, Identity. Розділені повідомлення й адаптери
-дозволять винести модулі в окремі сервіси, якщо це справді знадобиться.
+One modular Symfony application and database, with separate worker processes using
+the same code. Modules: Ingestion, Matching, Cv, Reporting and Identity. Messages
+and adapters allow later extraction into services if actual needs justify it.
 
-Пропоновані компоненти:
-- HttpClient — запити до джерел і LLM API.
-- Doctrine ORM + migrations + PostgreSQL — вакансії, профілі, версії CV, звіти.
-- Messenger + Doctrine transport — черга у PostgreSQL на старті; failure transport.
-- Scheduler або системний cron — постановка задач, з Lock від паралельного дублювання.
-- Validator/Serializer — перевірка DTO та відповідей AI; Monolog — діагностика.
+Components:
+- HttpClient: upstream job sources and LLM APIs.
+- Doctrine ORM/migrations/PostgreSQL: jobs, profiles, CV versions and reports.
+- Messenger/Doctrine: database-backed queue and failure transport.
+- Lock and system cron: bounded worker management; no autonomous search schedule.
+- Validator/Serializer: DTO and AI-response validation; Monolog: diagnostics.
 
-Redis/RabbitMQ не потрібні для першого локального запуску. Вони можуть замінити transport
-після вимірювання навантаження. Задачі мають бути ідемпотентними незалежно від transport.
-Messenger і Scheduler описані в документації Symfony 7.4:
-[Messenger](https://symfony.com/doc/7.4/messenger.html),
-[Scheduler](https://symfony.com/doc/7.4/scheduler.html),
-[HttpClient](https://symfony.com/doc/7.4/http_client.html).
+Redis/RabbitMQ are not required for the first version. Consider transport changes
+after measuring load. Tasks must remain idempotent regardless of transport.
+https://symfony.com/doc/7.4/messenger.html
+https://symfony.com/doc/7.4/scheduler.html
+https://symfony.com/doc/7.4/http_client.html
 
-3. Обраний UI: Symfony UX + Twig
+3. Symfony UX and Twig
 
-Рішення користувача: використовувати стандартний Symfony UX + Twig.
-Сторінки вакансій, фільтрів, профілю та перегляду CV рендерять Symfony controllers і Twig.
-Форми обробляти через Symfony Forms і Validator. Для інтерактивності підключати потрібні
-UX-компоненти поступово: Turbo для навігації/часткових оновлень, Stimulus для поведінки
-у браузері, Live Components для тих елементів, яким потрібна серверна реактивність.
-Початкову обробку ingestion перевірити через CLI, потім створювати кабінет.
+Symfony controllers render vacancies, filters, profiles and CV previews through
+Twig. Symfony Forms/Validator handle input. Add UX components where needed:
+Turbo for partial updates, Stimulus for browser behavior, and potentially Live
+Components for server reactivity. Current code disables full Turbo Drive navigation
+to keep per-document CSP nonces aligned; progress uses Turbo Frames.
 
-UI й backend працюють в одному Symfony-застосунку та використовують спільні services.
-Окремий REST API для кожної сторінки не потрібний; JSON endpoints додавати за конкретною
-потребою інтерактивного компонента чи майбутньої інтеграції.
-Запити до зовнішніх job API залишаються у backend/worker.
-Для assets почати з AssetMapper/importmap; окремий frontend dev server не планується.
-[Twig](https://symfony.com/doc/7.4/templates.html), [Symfony UX](https://ux.symfony.com/).
+UI/backend share services in one application. A REST API for every page is not
+needed; add JSON endpoints for concrete component/integration needs.
+External job API requests stay in backend workers. AssetMapper/importmap avoids a
+separate frontend development server.
+https://symfony.com/doc/7.4/templates.html
+https://ux.symfony.com/
 
-4. Локальна робота й ngrok
+4. Local work and ngrok
 
-Запити до зовнішніх job API виходять з локального backend/CLI. Для них ngrok не потрібен.
-Ngrok потрібен для відкриття нашого UI/API ззовні, наприклад з телефона.
+Outgoing API requests need no ngrok. A tunnel is useful for viewing the local UI
+from another device:
+ Browser -> ngrok HTTPS -> localhost:8000 -> Symfony controllers/Twig/UX assets
+ Symfony worker -> external job API/RSS
+ Local Symfony app -> SSH database tunnel -> shared MyDevil PostgreSQL
 
-Рекомендована схема для локального перегляду:
-  Браузер → ngrok HTTPS → localhost:8000, reverse proxy
-                                      └─ Symfony controllers + Twig + UX assets
-  Symfony worker → зовнішні job API/RSS
-  Symfony app/worker → локальна SQLite / PostgreSQL після перенесення
-
-Один Symfony origin для сторінок, форм і потрібних JSON endpoints.
-Для входу — серверна сесія; форми зі зміною стану захищати CSRF-токенами.
-Під час налаштування reverse proxy явно визначити довірені proxy/hosts і HTTPS headers.
-
-Після появи локального сервісу тунель можна буде запустити командою:
+Use one Symfony origin, server-side sessions and CSRF for state-changing forms.
+Configure trusted proxies/hosts and HTTPS headers explicitly.
+An optional tunnel command after the local service starts:
   ngrok http 8000
-Локальний сервіс уже перевірено на порту 8000. Тунель не запущено; перед зовнішнім
-доступом налаштувати prod env, довірений proxy та HTTPS cookie за ../../README.txt.
-Перед показом персонального CV через зовнішній URL потрібен вхід у застосунок або
-обмеження доступу в ngrok. Приклад засобу ngrok — OAuth Traffic Policy.
-Не виставляти PostgreSQL чи debug profiler через тунель; CV віддавати після перевірки власника.
-[ngrok start](https://ngrok.com/docs/start),
-[OAuth action](https://ngrok.com/docs/gateway/traffic-policy/actions/oauth).
+Port 8000 was tested during the initial research; that research did not start a
+tunnel. Configure the proxy/environment/HTTPS cookie before external access.
+Personal CVs require application login or suitable tunnel access restrictions.
+Never expose PostgreSQL or the debug profiler through the tunnel; PDFs need owner checks.
+https://ngrok.com/docs/start
+https://ngrok.com/docs/gateway/traffic-policy/actions/oauth
 
-5. Перенесення на хост
+5. Hosting
 
-Користувач обрав MyDevil MD2 як майбутній спільний хост для проєктів і Telegram-ботів.
-Докладні параметри й посилання: ../hosting.txt; скрін збережено поруч із ним.
-У тарифі перевірено PHP, PostgreSQL, SSH і cron. Розгортання плануємо нативно через засоби MyDevil.
-Для backend важливі керування CLI-воркерами та сумісність PDF renderer; перевірити їх на акаунті.
-Підтримку Docker/Compose на MD2 не підтверджено, тому контейнерне розгортання не є залежністю.
+MyDevil MD2 is the shared host for WorkLook and the Telegram bots.
+See ../hosting.txt for dated limits and the reference screenshot.
+PHP, PostgreSQL, SSH and cron were confirmed. Deployment uses native provider tools,
+a public/ web root, private CV storage and a separately managed CLI worker.
+Docker/Compose support was not confirmed and is not a production dependency.
 
-Локально Docker Compose можна обрати окремо як dev-середовище; для Windows це передбачає WSL2.
-Twig-шаблони та UX assets постачаються разом із Symfony-застосунком; для запропонованого
-AssetMapper/importmap workflow окремий Node runtime Агента 2 не планується.
-На хостингу: PHP-сайт із web root на public/, PostgreSQL провайдера, Doctrine transport,
-cron та окремо керований CLI worker. Приватні CV зберігати поза публічним каталогом.
-Налаштування DB host, шляхи й secrets задавати через env/config.
-Перенесення: код і залежності, env/secrets, assets, міграції, резервна копія БД,
-приватне сховище CV та перевірка відновлення воркерів після перезапуску.
+Local Docker Compose would require a suitable environment, such as WSL2 on Windows,
+and remains optional. Twig/UX assets ship with Symfony; WorkLook needs no Node build.
+Keep database hosts, paths and secrets in configuration.
+A deployment includes code/dependencies, private configuration, assets, migrations,
+database/private-file recovery and verified worker restart.
+Current deployment/migration has completed; do not treat this original plan as a
+pending instruction to repeat it.
 
-Офіційні сторінки альтернатив:
-[FastAPI](https://fastapi.tiangolo.com/), [NestJS](https://docs.nestjs.com/).
+Alternative framework documentation:
+https://fastapi.tiangolo.com/
+https://docs.nestjs.com/
