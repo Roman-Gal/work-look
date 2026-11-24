@@ -205,7 +205,7 @@ php bin/console doctrine:schema:validate
 composer audit
 ~~~
 
-The latest suite passed **67 tests and 526 assertions**. Tests guard the disposable
+The latest suite passed **68 tests and 531 assertions**. Tests guard the disposable
 database name before rebuilding its schema and mock external API calls. Coverage
 includes ownership, CSRF, login, escaping, PDFs, immutable facts, sources/XXE,
 verification/expiry/token reuse/throttling, SMTP failures, quotas, queue rollback,

@@ -88,6 +88,15 @@ final class ResumeKnowledgeTest extends WebTestCase
         $result=self::getContainer()->get(ResumeTextExtractor::class)->extract(new UploadedFile($this->file($pdf->output()),'cv.pdf','application/pdf',test:true));
         self::assertStringContainsString('Роман Галайко',$result['text']); self::assertStringContainsString('Łódź',$result['text']);
     }
+    public function testInRequestParserUsesTheSameLimitsAndRestoresMemorySettings(): void
+    {
+        $memory=ini_get('memory_limit'); $parser=new \App\Service\TextPdfParser();
+        self::assertStringContainsString('Jane Doe',$parser->parse($this->file($this->pdf()))['text']);
+        self::assertSame($memory,ini_get('memory_limit'));
+        try { $parser->parse($this->file($this->pdf([]))); self::fail('Image-only PDF was accepted.'); }
+        catch (\RuntimeException $error) { self::assertSame('no_text',$error->getMessage()); }
+        self::assertSame($memory,ini_get('memory_limit'));
+    }
     public function testUploadAndManualPackageAreOwnerScopedAndDoNotSpendSearch(): void
     {
         $this->upload(); $this->em->clear(); $draft=$this->draft(); self::assertStringContainsString('Jane Doe',$draft->text);

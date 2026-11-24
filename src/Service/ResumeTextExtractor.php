@@ -13,6 +13,13 @@ final class ResumeTextExtractor
     public function extract(UploadedFile $file): array
     {
         if (!$file->isValid() || $file->getSize() > 5_000_000 || strtolower($file->getClientOriginalExtension()) !== 'pdf') { throw new \InvalidArgumentException('resume.invalid'); }
+        if (PHP_SAPI !== 'cli' || !function_exists('proc_open')) {
+            try { return (new TextPdfParser())->parse($file->getPathname()); }
+            catch (\Throwable $error) {
+                $code = in_array($error->getMessage(), ['no_text', 'too_large', 'unavailable'], true) ? $error->getMessage() : 'invalid';
+                throw new \InvalidArgumentException('resume.'.$code);
+            }
+        }
         $binary = $this->phpBinary ?: (PHP_SAPI === 'cli' ? PHP_BINARY : '');
         if ($binary === '' || !is_file($binary) || !function_exists('proc_open')) { throw new \RuntimeException('resume.unavailable'); }
         $environment = array_fill_keys(array_keys(array_merge(getenv(), $_SERVER, $_ENV)), false);

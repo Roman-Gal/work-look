@@ -10,13 +10,18 @@ Only the authenticated account can access its draft, prompt package or prepared
 profile. Even an administrator cannot select another owner's draft through these
 routes. There are no public upload URLs.
 
-The request validates the upload and uses a separate CLI PHP process to extract
-text with smalot/pdfparser. Configure RESUME_PHP_BINARY=/usr/local/bin/php84 on
-MyDevil; CLI tests default to PHP_BINARY. The child has a 20-second wall timeout,
-128 MB PHP memory limit, 8 MB per-stream decoding bound and bounded object nesting.
-Image content is discarded. The child receives a minimal OS environment rather
-than application secrets. It does not boot Symfony or execute PDF actions. This
-is resource isolation, not an OS sandbox against a compromised parser.
+The request validates the upload and extracts text with smalot/pdfparser. MyDevil
+web PHP prohibits proc_open and restricts filesystem access, so web requests use
+the pure-PHP TextPdfParser directly. It caps PHP memory at 128 MB (or keeps a lower
+existing limit), PHP execution time at 15 seconds, stream decoding at 8 MB and
+object nesting at 200. Original PHP limits are restored afterwards. The execution
+timer is PHP's CPU-time limit on Unix, not an exact wall-clock deadline.
+CLI diagnostics use a child PHP process with a 20-second wall timeout and the same
+parser. RESUME_PHP_BINARY can override the CLI executable; it is not required for
+web parsing. The child receives a minimal OS environment rather than application
+secrets. Image content is discarded; no PDF actions are executed. These are
+resource limits, not an OS sandbox against a compromised parser. A fatal memory
+or execution-limit error can end the current upload request; the old draft is kept.
 
 One resume_draft row per account retains text, source filename/hash, page count,
 the user's search request/preferences and optional prepared profile data. Upload
