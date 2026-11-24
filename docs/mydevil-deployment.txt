@@ -1,3 +1,27 @@
+CURRENT STATUS — 2026-11-24 CSP HOTFIX DEPLOYED
+ Active runtime: 3fc326d182e916862e9ec1e1ba5c9d18a274cc62
+ Branch: codex/fix-turbo-csp-mydevil; base c4c7125 + CSP subscriber/test only.
+ Same fix on main: ce1063e1e64a205c0569a39427397e3743193211.
+ style-src permits self + the exact SHA-256 of pinned Turbo 8.0.23 progress CSS.
+ No unsafe-inline; no csp-nonce meta exposing script nonces to Turbo.
+ Local: 41 tests / 312 assertions, Twig/container lint, browser login/Turbo checked.
+ Host: source hashes checked, native container/Twig/compiled CSS hash checks passed;
+ HTTPS login/register 200, script nonce rotation and exact style hash checked;
+ browser login loaded without CSP console errors; both bot health endpoints 200.
+ No migrations/reset/data/credentials/bot changes. The quota/demo-removal release
+ d7b0aa4 remains NOT deployed; the test-data reset remains NOT executed.
+ Release archive came from git archive (no ignored credentials/data), uploaded by
+ scp using SFTP over SSH into apps/deploy-logs, extracted to a new releases folder;
+ fixed dependencies/assets prepared before an atomic current symlink switch.
+ MyDevil cached PHP paths required targeted OPcache invalidation of BOTH index.php
+ and src/EventSubscriber/SecurityHeadersSubscriber.php, including /home and /usr/home
+ aliases. One-use header-protected helpers existed in both old/new public folders
+ during invalidation and were immediately deleted. No permanent helper remains.
+ First two activation checks rolled back safely; final HTTP checks passed.
+ Own temporary SSH key revoked, fresh key-only login denied, local key pair deleted.
+ Private evidence: var/deploy/csp-hotfix-result.json and csp-key-cleanup-20261124.json.
+ Below: historical 2026-11-20 migration baseline, followed by pending product changes.
+
 MyDevil MD2 — active production deployment, 2026-11-20
 
 URL: https://rh-additional.usermd.net/
@@ -95,7 +119,8 @@ Email and AI:
  Registration with one-hour single-use email confirmation is active in UA/PL/EN.
  Sender noreply-worklook@rh-additional.usermd.net, SMTP mail93.mydevil.net:587 STARTTLS,
  certificate verification enabled. Actual SMTP->IMAP->HTTPS registration/login tested.
- New public accounts have one free AI search, enforced atomically in PostgreSQL.
+ Target main behavior (not active in the historical runtime described here): new
+ public accounts have one free AI search, enforced atomically in PostgreSQL.
  Payment is a disabled placeholder; there is no payment provider or financial charge.
  OpenAI key is still absent unless the owner later configures it; AI search stays
  unavailable and the free allowance is not consumed. Demo mode/generator are removed.
@@ -130,6 +155,16 @@ References:
  https://developers.deepl.com/api-reference/translate/request-translation
 
 LATEST PRODUCT UPDATE — single free search and explicit test reset:
+ STATUS 2026-11-24: IMPLEMENTED AND PUSHED (d7b0aa4), NOT DEPLOYED.
+ Last activation command was rejected before execution because automatic approval
+ review hit a usage limit. Candidate release was prepared only. No production quota
+ migration or requested data reset has been performed by that attempt.
+ Active runtime is now 3fc326d (2026-11-24 CSP-only hotfix based on c4c7125).
+ The quota migration and test reset are still pending; do not assume main is active.
+ The paragraphs below describe the implementation/requested target, not completed
+ production cleanup. Temporary trial SSH key was revoked on 2026-11-24 and local
+ key files deleted after verifying fresh public-key authentication was rejected.
+ The next development phase is LOCAL first, then GitHub and MyDevil.
  User explicitly requested deleting ALL WorkLook test data except the demo login;
  demo-associated profiles/history/matches can also be erased. Telegram apps untouched.
  New migration adds app_user.free_search_run_id (null = unused). Conditional UPDATE
@@ -141,10 +176,10 @@ LATEST PRODUCT UPDATE — single free search and explicit test reset:
  grants another search. Future payments must add a real entitlement ledger rather
  than resetting the trial pointer. No billing amount, provider or checkout exists.
  All public demo options, fake-job generator and demo rendering paths are removed.
- User keeps demo@worklook.local and its password, with an empty profile/history and
- one unused free search. Other WorkLook accounts, profiles, jobs, matches and queue
- are erased. Schema/migration metadata remains. Test backup artifacts are purged or
- rewritten to remove only WorkLook entries while preserving bot snapshots.
+ Requested target after the PENDING reset: keep demo@worklook.local and its password,
+ with an empty profile/history and one unused free search. Erase other WorkLook
+ accounts/profiles/jobs/matches/queue; retain schema/migration metadata. Purge or
+ rewrite only WorkLook backup data while preserving bot snapshots. NOT EXECUTED YET.
  Local tests: 39 tests/296 assertions; includes atomic allowance, queue rollback,
  stale-refund protection, missing-key/cancel refund, model-attempt consumption,
  payment placeholder and destructive reset retaining exactly the chosen login.
