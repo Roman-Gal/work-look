@@ -12,8 +12,10 @@ Browser POST / (CSRF + authenticated User)
 A Turbo Frame polls GET /runs/{id}; authentication and ownership remain server-side.
 Turbo Drive is disabled so full navigations refresh the document's CSP nonce.
 
-The agent has exactly five tools:
+The agent has exactly six tools:
  get_my_profile(): snapshot facts, preferences, headline, sources and score threshold.
+ get_search_knowledge(query,source): reviewed shared guidance + this owner's saved
+                                  prompts, restricted to allowed sources; four bounded results.
  search_jobs(source,keywords,page): allowlist and budget; up to 10 jobs per request.
  get_job_details(job_id): only jobs discovered by this run.
  save_job_match(job_id,score,reasons,gaps): after reading details; no expired jobs.
@@ -60,6 +62,11 @@ Code map
  src/EventSubscriber/ActivitySubscriber.php and src/Service/ActivityRecorder.php:
  private website activity and transactional administrator audit; excludes bot gateways.
  src/Service/IpLocation.php: local MMDB lookup; see administration.txt for retention.
+ src/Controller/ResumeController.php: private text-PDF draft and manual prompt/JSON flow.
+ src/Service/ResumeTextExtractor.php and tools/extract-resume.php: bounded CLI parsing,
+ no OCR. ResumeProfilePreparation validates source excerpts before profile preview.
+ src/Controller/KnowledgeController.php and src/Service/KnowledgeBase.php: reviewed
+ shared KB and owner-scoped prompts. See resume-and-knowledge.txt for boundaries.
  tools/router.php: local PHP development server only.
 
 Current normalized adapter record (not the richer proposed DTO)

@@ -1,4 +1,5 @@
 <nav class="admin-tabs" aria-label="{{ 'admin.nav'|trans }}">
     <a class="{{ app.request.attributes.get('_route') == 'app_admin' ? 'selected' : '' }}" href="{{ path('app_admin') }}">{{ 'admin.statistics'|trans }}</a>
-    <a class="{{ app.request.attributes.get('_route') != 'app_admin' ? 'selected' : '' }}" href="{{ path('app_admin_users') }}">{{ 'admin.users'|trans }}</a>
+    <a class="{{ app.request.attributes.get('_route') in ['app_admin_users', 'app_admin_user', 'app_admin_user_ai'] ? 'selected' : '' }}" href="{{ path('app_admin_users') }}">{{ 'admin.users'|trans }}</a>
+<a href="{{ path('app_knowledge') }}">{{ 'kb.nav'|trans }}</a>
 </nav>

@@ -1,0 +1,102 @@
+Text PDF intake, manual AI review and search knowledge
+2026-11-24
+
+Resume intake
+/resume accepts text-based PDFs. OCR is deliberately absent. A PDF without usable
+text is rejected; no recognition service or AI fallback is invoked. Limits are
+5,000,000 file bytes, 20 pages, 60,000 extracted characters and five uploads per
+account per hour. The PHP upload/post limits must allow the configured file size.
+Only the authenticated account can access its draft, prompt package or prepared
+profile. Even an administrator cannot select another owner's draft through these
+routes. There are no public upload URLs.
+
+The request validates the upload and uses a separate CLI PHP process to extract
+text with smalot/pdfparser. Configure RESUME_PHP_BINARY=/usr/local/bin/php84 on
+MyDevil; CLI tests default to PHP_BINARY. The child has a 20-second wall timeout,
+128 MB PHP memory limit, 8 MB per-stream decoding bound and bounded object nesting.
+Image content is discarded. The child receives a minimal OS environment rather
+than application secrets. It does not boot Symfony or execute PDF actions. This
+is resource isolation, not an OS sandbox against a compromised parser.
+
+One resume_draft row per account retains text, source filename/hash, page count,
+the user's search request/preferences and optional prepared profile data. Upload
+temporary files are handled by PHP and are not copied to persistent storage.
+The original PDF is not retained. A successful upload replaces that owner's old
+draft; a failed parse preserves it. Replacing a draft invalidates its prepared
+profile and previous draft-specific CSRF tokens. Removing the draft leaves the
+confirmed profile and run history intact. Existing private backups have their own
+retention. Multi-column layouts may linearize poorly; users can review the text.
+
+Manual AI workflow
+Save the desired role/conditions, then download /resume/prompt.txt. The private,
+no-store TXT contains the source text, those preferences, up to four relevant KB
+entries and explicit fact-preservation instructions. It makes no model request.
+The user chooses an external AI and transfers the package manually. The raw resume
+may contain contact or other personal data; the UI states this before download.
+The schema is:
+ {"display_name":"", "headline":"", "contact_line":"", "facts":["..."]}
+Paste the AI JSON into /resume. Validation accepts only those keys, 1–30 string
+facts and at most 16,000 fact characters. Name/headline/contact fields and every
+fact must occur in the resume after whitespace normalization. Unknown contact or
+headline fields can be empty. Rewriting, translation and newly invented assertions
+are refused. The model output cannot supply user IDs or permissions.
+
+Validated JSON remains a draft. /profile?resume=1 previews its selected source
+excerpts and the user's own preferences. Only the normal CSRF-protected profile
+save commits them. Existing canonical profiles are never overwritten on upload or
+JSON paste alone. A user can edit the preview before saving. Verbatim containment
+does not prove semantic completeness: a misleading fragment can still occur in a
+resume, so human review of role/employer/date context is required. Generated CVs
+continue to select stable fact IDs from immutable run snapshots.
+
+Knowledge base
+/knowledge has two scopes:
+ - Shared knowledge: owner_id=NULL; draft, published or archived. Only the single
+   administrator edits it. Publishing requires a review date plus a source URL or
+   editorial provenance note. Source links must use HTTPS. Changes are audited in
+   the same transaction; a revision token and Doctrine optimistic locking detect
+   stale edits. The counter is not a complete historical revision archive.
+ - Private search prompts: owner_id=current user; draft status; user-editable and
+   removable with CSRF. At most 100 per owner. They can be prepared from the owner's
+   saved run request or entered directly. Other users and their agents never see
+   them. They are not automatically published, harvested into shared knowledge or
+   used to train a model. Publishing examples requires an independently edited,
+   reviewed shared entry; no automatic promotion copies a customer's raw prompt.
+
+Entries include title, kind, site, language, text, source/provenance, review date,
+updated time and revision. Records older than 90 days show a review-due flag.
+Listing a platform in KB does not enable its search adapter. The library can hold
+manual notes about researched sites while the live agent remains restricted to
+SOLID.Jobs, DOU and Djinni.
+
+app:knowledge:seed inserts five dated initial notes/templates. Three describe the
+already researched adapters (evidence dated 2026-11-20); two are editorial request
+and review guidance. It performs no network requests. Stable seed keys make it
+idempotent and preserve all administrator edits. It is not a crawler, automated
+fact-checker or evidence that every website feature remains unchanged.
+
+Agent access
+get_search_knowledge(query,source) is the sixth agent tool. It searches published,
+reviewed shared records and this run owner's own private prompts, constrained to
+the run's allowed sources plus general guidance. It cannot read resume drafts or
+other accounts' prompts. Retrieval uses bounded lexical matching (up to six terms,
+100 candidates and four results, each capped at 2,000 content characters), with no
+embedding API cost. Returned records carry IDs, revisions, dates, provenance and
+truncation/review-due flags. They are untrusted reference data, never instructions
+or evidence of candidate experience. Existing 24-tool and other run budgets apply.
+
+Data and deployment
+Version20261124180000 adds resume_draft and knowledge_entry; existing data is kept.
+Run the seed command after migration. Keep the existing shared WorkLook PostgreSQL
+and isolated disposable SQLite tests. No second application or bot changes.
+The explicit test-data reset, when separately requested, also clears resume drafts
+and private prompts; it preserves curated shared KB and its existing admin guard.
+Never run that command as a migration check.
+No API key, subscription/OAuth adapter, paid entitlement or token-pricing change is
+introduced. The key provided by the owner remains private; the earlier API probe
+returned credit_balance_exhausted. This manual workflow does not spend search quota.
+
+References
+https://github.com/smalot/pdfparser
+https://symfony.com/doc/7.4/components/process.html
+https://symfony.com/doc/7.4/controller/upload_file.html

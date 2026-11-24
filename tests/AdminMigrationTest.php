@@ -11,7 +11,7 @@ final class AdminMigrationTest extends TestCase
     public function testMigrationPreservesExistingAccountsAndBuildsPortablePostgresSql(): void
     {
         $db = DriverManager::getConnection(['driver' => 'pdo_sqlite', 'memory' => true]);
-        foreach (['Version20261120153213', 'Version20261120230000', 'Version20261120235900', 'Version20261124160000'] as $name) {
+        foreach (['Version20261120153213', 'Version20261120230000', 'Version20261120235900', 'Version20261124160000', 'Version20261124180000'] as $name) {
             require_once dirname(__DIR__).'/migrations/'.$name.'.php';
         }
         foreach (['Version20261120153213', 'Version20261120230000', 'Version20261120235900'] as $name) {
@@ -35,6 +35,25 @@ final class AdminMigrationTest extends TestCase
         self::assertSame('preserved-password-hash', $user['password']); self::assertSame('preserved-reservation', $user['free_search_run_id']);
         self::assertNull($user['admin_key']); self::assertSame(0, (int) $db->fetchOne('SELECT COUNT(*) FROM activity_event'));
         self::assertTrue($db->createSchemaManager()->introspectTable('app_user')->hasIndex('singleton_admin_key'));
+        $newSchema = $db->createSchemaManager()->introspectSchema();
+        $resumePg = new \DoctrineMigrations\Version20261124180000($postgres, new NullLogger()); $resumePg->up($newSchema);
+        $resumeSql = implode("\n", array_map(static fn ($query) => $query->getStatement(), $resumePg->getSql()));
+        self::assertStringContainsString('CREATE TABLE resume_draft', $resumeSql); self::assertStringContainsString('CREATE TABLE knowledge_entry', $resumeSql);
+        self::assertStringNotContainsString('DELETE FROM', $resumeSql);
+        $resumeMigration = new \DoctrineMigrations\Version20261124180000($db, new NullLogger()); $resumeMigration->up($newSchema);
+        foreach ($resumeMigration->getSql() as $query) { $db->executeStatement($query->getStatement(), $query->getParameters(), $query->getTypes()); }
+        self::assertSame(0, (int) $db->fetchOne('SELECT COUNT(*) FROM resume_draft')); self::assertSame(0, (int) $db->fetchOne('SELECT COUNT(*) FROM knowledge_entry'));
+        self::assertSame('preserved-password-hash', $db->fetchOne('SELECT password FROM app_user'));
+        $config = \Doctrine\ORM\ORMSetup::createAttributeMetadataConfiguration([dirname(__DIR__).'/src/Entity'], true);
+        $config->setNamingStrategy(new \Doctrine\ORM\Mapping\UnderscoreNamingStrategy(CASE_LOWER));
+        $em = new \Doctrine\ORM\EntityManager($db, $config);
+        $em->getConfiguration()->setUseSchemaEditorApi(true);
+        $expected = (new \Doctrine\ORM\Tools\SchemaTool($em))->getSchemaFromMetadata($em->getMetadataFactory()->getAllMetadata());
+        $manager = $db->createSchemaManager(); $comparator = $manager->createComparator();
+        foreach (['resume_draft', 'knowledge_entry'] as $table) {
+            $diff = $comparator->compareTables($manager->introspectTable($table), $expected->getTable($table));
+            self::assertTrue($diff->isEmpty(), implode("\n", $db->getDatabasePlatform()->getAlterTableSQL($diff)));
+        }
         $db->close(); $postgres->close();
     }
 }

@@ -1,5 +1,9 @@
 framework:
     rate_limiter:
+        resume_import:
+            policy: fixed_window
+            limit: 5
+            interval: '1 hour'
         registration_ip:
             policy: fixed_window
             limit: 5

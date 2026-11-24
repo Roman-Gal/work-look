@@ -29,10 +29,12 @@ final class ResetTestDataCommand extends Command
                 throw new \RuntimeException('Reset would delete the singleton administrator; nothing erased.');
             }
             // Dependency order, no CASCADE outside these explicit WorkLook tables/databases.
-            foreach (['messenger_messages', 'job_match', 'profile', 'agent_run', 'job'] as $table) {
+            foreach (['messenger_messages', 'resume_draft', 'job_match', 'profile', 'agent_run', 'job'] as $table) {
                 if ($table === 'messenger_messages' && !$db->createSchemaManager()->tablesExist([$table])) { continue; }
+                if ($table === 'resume_draft' && !$db->createSchemaManager()->tablesExist([$table])) { continue; }
                 $db->executeStatement('DELETE FROM '.$table);
             }
+            if ($db->createSchemaManager()->tablesExist(['knowledge_entry'])) { $db->executeStatement('DELETE FROM knowledge_entry WHERE owner_id IS NOT NULL'); }
             $db->executeStatement('DELETE FROM app_user WHERE id <> ?', [$id]);
             $db->executeStatement('UPDATE app_user SET free_search_run_id = NULL, verification_hash = NULL, verification_expires_at = NULL, is_verified = ?, live_ai_enabled = ? WHERE id = ?',
                 [true, true, $id], [ParameterType::BOOLEAN, ParameterType::BOOLEAN, ParameterType::INTEGER]);

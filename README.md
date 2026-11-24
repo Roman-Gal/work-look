@@ -17,6 +17,8 @@ from your canonical profile. You stay in control of applications.
 - Email-verified accounts and Ukrainian, Polish and English interfaces.
 - One free AI search per verified account; a disabled button reserves future payments.
 - A singleton administrator, private traffic statistics and searchable activity logs.
+- Text-PDF resume intake, private drafts and a manual AI prompt/JSON review workflow.
+- Reviewed search knowledge and private saved prompts, accessible to the search agent.
 
 There is no autonomous search schedule or automatic application submission.
 Demo search and fabricated offers have been removed.
@@ -159,8 +161,10 @@ Enter one self-contained, truthful fact per line. Each fact has a stable ID; eac
 run stores an immutable profile snapshot. The model selects and orders known IDs,
 and the server rejects unknown/duplicate IDs. PDFs copy the original text.
 
-Free-form rewriting, CV translation, PDF import, cover letters, geocoding and commute
-estimates are not implemented. Match scores and explanations require human review.
+Text-based PDF import stores a private draft and supports a manual AI prompt/JSON
+workflow with source-excerpt validation and explicit profile confirmation. OCR is
+not supported. Free-form rewriting, CV translation, cover letters, geocoding and
+commute estimates are not implemented. Match scores and explanations require human review.
 
 The interface supports **UA / PL / EN**. Ukrainian uses internal locale uk and is the
 default. A validated browser cookie stores the choice for a year. Translations live
@@ -201,7 +205,7 @@ php bin/console doctrine:schema:validate
 composer audit
 ~~~
 
-The latest suite passed **54 tests and 420 assertions**. Tests guard the disposable
+The latest suite passed **67 tests and 526 assertions**. Tests guard the disposable
 database name before rebuilding its schema and mock external API calls. Coverage
 includes ownership, CSRF, login, escaping, PDFs, immutable facts, sources/XXE,
 verification/expiry/token reuse/throttling, SMTP failures, quotas, queue rollback,
@@ -224,6 +228,7 @@ current. Docker is optional locally and is not a hosting requirement.
 | [Deployment](docs/mydevil-deployment.txt) | Verified release, workers, backups and host operations |
 | [Email registration](docs/email-registration.txt) | Confirmation flow, SMTP and safeguards |
 | [Administration](docs/administration.txt) | Owner account, traffic statistics, activity audit, GeoIP and retention |
+| [Resume intake and knowledge](docs/resume-and-knowledge.txt) | Text PDF import, manual AI review, shared KB and private prompts |
 | [Hosting](docs/hosting.txt) | Multiple runtimes, domains and process management |
 | [Specification](docs/specification.txt) | Original goals and later product decisions |
 | [Research](docs/research/00-README.txt) | API/RSS findings, contracts, requests and dated evidence |

@@ -16,12 +16,22 @@ final class ToolExecutor
         return match ($name) {
             'get_my_profile' => ['facts' => $run->profileSnapshot['facts'], 'headline' => $run->profileSnapshot['headline'],
                 'preferences' => $run->profileSnapshot['preferences'], 'sources' => $run->sources, 'minimum_score' => $run->minimumScore],
+            'get_search_knowledge' => $this->knowledge($run, $args),
             'search_jobs' => $this->search($run, $args, $state),
             'get_job_details' => $this->inspect($run, $args, $state),
             'save_job_match' => $this->saveMatch($run, $args, $state),
             'prepare_cv' => $this->prepareCv($run, $args, $state),
             default => throw new \InvalidArgumentException('Невідомий інструмент агента.'),
         };
+    }
+
+    private function knowledge(AgentRun $run, array $args): array
+    {
+        $query = $args['query'] ?? null; $source = $args['source'] ?? null;
+        if (!is_string($query) || mb_strlen($query) > 180 || !is_string($source) || !in_array($source, ['general', ...$run->sources], true)) { throw new \InvalidArgumentException('Недозволені параметри бази знань.'); }
+        $entries = (new \App\Service\KnowledgeBase($this->em))->search($run->user, $query, $source === 'general' ? ['general', ...$run->sources] : ['general', $source]);
+        $run->addEvent('event.knowledge', parameters: ['%count%' => count($entries)]);
+        return ['entries' => $entries, 'candidate_facts' => false, 'live_source_access' => false];
     }
 
     private function search(AgentRun $run, array $args, array &$state): array

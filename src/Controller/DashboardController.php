@@ -2,7 +2,7 @@
 namespace App\Controller;
 
 use App\Agent\OpenAiClient;
-use App\Entity\{AgentRun, JobMatch, Profile, User};
+use App\Entity\{AgentRun, JobMatch, Profile, ResumeDraft, User};
 use App\Form\{ProfileType, RunType};
 use App\Service\{SearchAllowance, SearchLauncher};
 use Doctrine\ORM\EntityManagerInterface;
@@ -53,12 +53,21 @@ final class DashboardController extends AbstractController
     {
         /** @var User $user */ $user = $this->getUser();
         $profile = $this->em->getRepository(Profile::class)->findOneBy(['user' => $user]) ?? new Profile($user);
+        $preparedDraft = null;
+        if ($request->query->getString('resume') === '1') {
+            $preparedDraft = $this->em->getRepository(ResumeDraft::class)->findOneBy(['user' => $user]);
+            if (!$preparedDraft?->preparedProfile) { return $this->redirectToRoute('app_resume'); }
+            $prepared = $preparedDraft->preparedProfile;
+            $profile->displayName = $prepared['display_name']; $profile->headline = $prepared['headline'];
+            $profile->contactLine = $prepared['contact_line']; $profile->factsText = $prepared['facts_text'];
+            $profile->preferences = $preparedDraft->preferences;
+        }
         $form = $this->createForm(ProfileType::class, $profile); $form->handleRequest($request);
         if ($form->isSubmitted() && $form->isValid()) {
             $profile->updatedAt = new \DateTimeImmutable(); $this->em->persist($profile); $this->em->flush();
             $this->addFlash('success', 'flash.saved');
             return $this->redirectToRoute('app_profile', status: Response::HTTP_SEE_OTHER);
         }
-        return $this->render('profile/edit.html.twig', ['form' => $form, 'profile' => $profile]);
+        return $this->render('profile/edit.html.twig', ['form' => $form, 'profile' => $profile, 'preparedDraft' => $preparedDraft]);
     }
 }
