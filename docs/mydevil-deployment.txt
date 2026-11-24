@@ -1,28 +1,63 @@
-CURRENT STATUS — 2026-11-24 CSP HOTFIX DEPLOYED
- Active runtime: 3fc326d182e916862e9ec1e1ba5c9d18a274cc62
- Branch: codex/fix-turbo-csp-mydevil; base c4c7125 + CSP subscriber/test only.
- Same fix on main: ce1063e1e64a205c0569a39427397e3743193211.
- style-src permits self + the exact SHA-256 of pinned Turbo 8.0.23 progress CSS.
- No unsafe-inline; no csp-nonce meta exposing script nonces to Turbo.
- Local: 41 tests / 312 assertions, Twig/container lint, browser login/Turbo checked.
- Host: source hashes checked, native container/Twig/compiled CSS hash checks passed;
- HTTPS login/register 200, script nonce rotation and exact style hash checked;
- browser login loaded without CSP console errors; both bot health endpoints 200.
- No migrations/reset/data/credentials/bot changes. The quota/demo-removal release
- d7b0aa4 remains NOT deployed; the test-data reset remains NOT executed.
- Release archive came from git archive (no ignored credentials/data), uploaded by
- scp using SFTP over SSH into apps/deploy-logs, extracted to a new releases folder;
- fixed dependencies/assets prepared before an atomic current symlink switch.
- MyDevil cached PHP paths required targeted OPcache invalidation of BOTH index.php
- and src/EventSubscriber/SecurityHeadersSubscriber.php, including /home and /usr/home
- aliases. One-use header-protected helpers existed in both old/new public folders
- during invalidation and were immediately deleted. No permanent helper remains.
- First two activation checks rolled back safely; final HTTP checks passed.
- Own temporary SSH key revoked, fresh key-only login denied, local key pair deleted.
- Private evidence: var/deploy/csp-hotfix-result.json and csp-key-cleanup-20261124.json.
- Below: historical 2026-11-20 migration baseline, followed by pending product changes.
+CURRENT VERIFIED DEPLOYMENT — 2026-11-24
+URL: https://rh-additional.usermd.net/
+Runtime: 9d4d29bd0596aac645a4a5d445a0297a95bab303 (main archive).
+Later Git commits may update documentation only; the runtime code is this revision.
+Previous runtime 3fc326d was a CSP-only hotfix based on c4c7125.
 
-MyDevil MD2 — active production deployment, 2026-11-20
+Completed, not pending:
+ - Migration DoctrineMigrations\Version20261120235900 applied on p1091_worklook.
+ - One free live AI search per verified enabled account, atomic reservation/run/queue.
+ - Disabled future-payment button; no payment integration/charge/price configured.
+ - Demo mode/fake offers removed; canonical CV facts only.
+ - All WorkLook test data erased except the exact demo login and existing password.
+ - Final table counts: app_user=1; profile/agent_run/job/job_match/messenger_messages=0.
+ - demo@worklook.local is verified/enabled with free_search_run_id=NULL (one available).
+ - Missing OpenAI API key confirmed; search remains disabled and trial unspent.
+ - Native PostgreSQL queue transaction, second-search rejection, worker replay and
+   transaction rollback checked using temporary fixtures + MockHttpClient, then reset.
+ - HTTPS demo password login and real new dashboard/payment placeholder confirmed.
+ - CSP hash for pinned Turbo progress CSS retained, no unsafe-inline.
+ - Bot loopback health 200 each; both public webhooks reject wrong secret with 401.
+ - Worker cron restored; exactly one lockf-protected PHP worker of releases/9d4d29b
+   confirmed. FreeBSD ps needs separate -o pid= -o command=; a comma list had produced
+   misleading empty command fields in an earlier diagnostic. Use the corrected form.
+ - No remaining public deployment helpers or maintenance marker.
+ - Temporary SSH key revoked; fresh key-only login rejected, local key pair deleted.
+
+Data cleanup and backups:
+User explicitly approved deleting old WorkLook backups in a separate prompt after
+approval review initially rejected that deletion. No permission block remains.
+8 old WorkLook PostgreSQL dumps removed. New clean database backup retained:
+ apps/work-look/shared/backups/worklook-20261124T114205Z.dump (pg_restore list checked).
+Mixed SQLite archives rewritten with only WorkLook entries removed: 3 entries on PC,
+3 on host. All bot entries retained and hashes unchanged (24 PC entries / 4 host).
+Local disposable worklook_test.db removed; tests can recreate it. No runtime SQLite.
+Planner/translator code, DB rows, credentials and webhook registrations unchanged.
+One PostgreSQL per app remains: p1091_worklook / p1091_planner / p1091_translator.
+
+Workflow preference:
+User explicitly wants ONE shared WorkLook PostgreSQL for this development pet project.
+Local .env.local uses the MyDevil DB through localhost:8543 SSH tunnel. Do not create
+an extra dev/prod DB split. Keep disposable test fixtures isolated from this shared DB.
+Git commits restore code; migration/data recovery is separate. Do not accidentally
+start a duplicate local worker or overwrite hosted Telegram webhooks.
+Local work -> checks -> GitHub -> MyDevil remains the development workflow.
+
+Deployment mechanics:
+git archive -> SFTP/scp over SSH -> new releases folder -> composer --no-dev, Twig/DI,
+assets and migration dry-run -> temporary WorkLook-only maintenance (bot paths kept
+open), pause worker cron -> migration/native trial checks/reset -> current symlink ->
+restore original front controllers, targeted web-SAPI OPcache invalidation -> checks.
+Both index.php and changed PHP files may need /home and /usr/home alias invalidation;
+CLI OPcache is separate. All one-use header-protected PHP helpers were removed.
+Private evidence under var/deploy/: final-main-result.json, final-db-result.json,
+final-web-result.json, final-worker-result.json, final-worklook-backup-cleanup.json,
+final-local-worklook-cleanup.json and final-key-cleanup-20261124.json.
+No live AI request or message to a Telegram user was made by deployment checks.
+
+The following is preserved migration history, not the current release/data inventory.
+
+HISTORICAL MIGRATION BASELINE — 2026-11-20 (versions/counts below are historical)
 
 URL: https://rh-additional.usermd.net/
 SSH: RH-additional@s93.mydevil.net (FreeBSD, PHP 8.4.28, Node 24.22.1, Python 3.12).
@@ -153,33 +188,3 @@ References:
  https://github.com/brianc/node-postgres/tree/master/packages/pg-native
  https://www.psycopg.org/psycopg3/docs/basic/install.html
  https://developers.deepl.com/api-reference/translate/request-translation
-
-LATEST PRODUCT UPDATE — single free search and explicit test reset:
- STATUS 2026-11-24: IMPLEMENTED AND PUSHED (d7b0aa4), NOT DEPLOYED.
- Last activation command was rejected before execution because automatic approval
- review hit a usage limit. Candidate release was prepared only. No production quota
- migration or requested data reset has been performed by that attempt.
- Active runtime is now 3fc326d (2026-11-24 CSP-only hotfix based on c4c7125).
- The quota migration and test reset are still pending; do not assume main is active.
- The paragraphs below describe the implementation/requested target, not completed
- production cleanup. Temporary trial SSH key was revoked on 2026-11-24 and local
- key files deleted after verifying fresh public-key authentication was rejected.
- The next development phase is LOCAL first, then GitHub and MyDevil.
- User explicitly requested deleting ALL WorkLook test data except the demo login;
- demo-associated profiles/history/matches can also be erased. Telegram apps untouched.
- New migration adds app_user.free_search_run_id (null = unused). Conditional UPDATE
- reserves exactly one queued run. Run+debit+Doctrine queue are one DB transaction.
- Worker checks reservation and claims queued->running in the DB, not only a file lock.
- Cancel/failure before modelCalls>0 refunds only the matching run ID, idempotently.
- Actual model attempts consume the free search, including attempts that fail later.
- Existing live-ai on/off command now only suspends/restores permission; it never
- grants another search. Future payments must add a real entitlement ledger rather
- than resetting the trial pointer. No billing amount, provider or checkout exists.
- All public demo options, fake-job generator and demo rendering paths are removed.
- Requested target after the PENDING reset: keep demo@worklook.local and its password,
- with an empty profile/history and one unused free search. Erase other WorkLook
- accounts/profiles/jobs/matches/queue; retain schema/migration metadata. Purge or
- rewrite only WorkLook backup data while preserving bot snapshots. NOT EXECUTED YET.
- Local tests: 39 tests/296 assertions; includes atomic allowance, queue rollback,
- stale-refund protection, missing-key/cancel refund, model-attempt consumption,
- payment placeholder and destructive reset retaining exactly the chosen login.
