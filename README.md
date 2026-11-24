@@ -16,6 +16,7 @@ from your canonical profile. You stay in control of applications.
 - Vacancy statuses: New, Reviewed, Applied and Skipped.
 - Email-verified accounts and Ukrainian, Polish and English interfaces.
 - One free AI search per verified account; a disabled button reserves future payments.
+- A singleton administrator, private traffic statistics and searchable activity logs.
 
 There is no autonomous search schedule or automatic application submission.
 Demo search and fabricated offers have been removed.
@@ -200,11 +201,14 @@ php bin/console doctrine:schema:validate
 composer audit
 ~~~
 
-The latest suite passed **41 tests and 312 assertions**. Tests guard the disposable
+The latest suite passed **54 tests and 420 assertions**. Tests guard the disposable
 database name before rebuilding its schema and mock external API calls. Coverage
 includes ownership, CSRF, login, escaping, PDFs, immutable facts, sources/XXE,
 verification/expiry/token reuse/throttling, SMTP failures, quotas, queue rollback,
 idempotency, the agent tool loop and the pinned Turbo stylesheet hash.
+Administrator coverage includes the singleton identity, route authorization,
+cross-user inspection, CSRF, audit rollback, secret-free activity records, retention
+and the additive SQLite/PostgreSQL migration SQL.
 Live source checks are manual diagnostics, not a required part of every test run.
 
 ## Deployment and documentation
@@ -219,6 +223,7 @@ current. Docker is optional locally and is not a hosting requirement.
 | [Architecture](docs/architecture.txt) | Agent flow, tools, entities and implementation boundaries |
 | [Deployment](docs/mydevil-deployment.txt) | Verified release, workers, backups and host operations |
 | [Email registration](docs/email-registration.txt) | Confirmation flow, SMTP and safeguards |
+| [Administration](docs/administration.txt) | Owner account, traffic statistics, activity audit, GeoIP and retention |
 | [Hosting](docs/hosting.txt) | Multiple runtimes, domains and process management |
 | [Specification](docs/specification.txt) | Original goals and later product decisions |
 | [Research](docs/research/00-README.txt) | API/RSS findings, contracts, requests and dated evidence |

@@ -56,6 +56,10 @@ Code map
  profileSnapshot.ui_locale fixes the language of new AI explanations without a migration.
  templates/ and assets/: Twig/UX, without a CDN, separate SPA or Node build.
  tests/: disposable SQLite integration/unit fixtures; external calls are mocked.
+ src/Controller/AdminController.php: singleton-owner statistics and user management.
+ src/EventSubscriber/ActivitySubscriber.php and src/Service/ActivityRecorder.php:
+ private website activity and transactional administrator audit; excludes bot gateways.
+ src/Service/IpLocation.php: local MMDB lookup; see administration.txt for retention.
  tools/router.php: local PHP development server only.
 
 Current normalized adapter record (not the richer proposed DTO)

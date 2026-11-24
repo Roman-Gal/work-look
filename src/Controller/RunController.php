@@ -9,10 +9,12 @@ use Symfony\Component\Routing\Attribute\Route;
 
 final class RunController extends AbstractController
 {
-    public function __construct(private EntityManagerInterface $em) {}
+    public function __construct(private EntityManagerInterface $em, private \App\Service\ActivityRecorder $activity) {}
     private function owned(string $id): AgentRun
     {
-        return $this->em->getRepository(AgentRun::class)->findOneBy(['id' => $id, 'user' => $this->getUser()]) ?? throw $this->createNotFoundException();
+        $criteria = ['id' => $id];
+        if (!$this->isGranted('ROLE_ADMIN')) { $criteria['user'] = $this->getUser(); }
+        return $this->em->getRepository(AgentRun::class)->findOneBy($criteria) ?? throw $this->createNotFoundException();
     }
     #[Route('/runs/{id}', name: 'app_run', methods: ['GET'])]
     public function show(string $id): Response
@@ -26,7 +28,12 @@ final class RunController extends AbstractController
         $run = $this->owned($id);
         if (!$this->isCsrfTokenValid('cancel_'.$id, $request->request->get('_token'))) { throw $this->createAccessDeniedException(); }
         if ($run->isActive()) {
-            $this->em->getConnection()->executeStatement('UPDATE agent_run SET cancel_requested = ? WHERE id = ?', [true, $id], [\Doctrine\DBAL\ParameterType::BOOLEAN, \Doctrine\DBAL\ParameterType::STRING]);
+            $this->em->getConnection()->transactional(function () use ($id, $request): void {
+                $this->em->getConnection()->executeStatement('UPDATE agent_run SET cancel_requested = ? WHERE id = ?', [true, $id], [\Doctrine\DBAL\ParameterType::BOOLEAN, \Doctrine\DBAL\ParameterType::STRING]);
+                if ($this->isGranted('ROLE_ADMIN') && !$this->activity->record($request, 'admin_action', 303, $this->getUser(), ['action' => 'run_cancelled', 'run_id' => $id])) {
+                    throw new \RuntimeException('Administrator action audit unavailable.');
+                }
+            });
             $this->addFlash('success', 'flash.cancel');
         }
         return $this->redirectToRoute('app_run', ['id' => $id], Response::HTTP_SEE_OTHER);

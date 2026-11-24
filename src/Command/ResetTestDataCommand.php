@@ -25,6 +25,9 @@ final class ResetTestDataCommand extends Command
         $db->transactional(function () use ($db, $input): void {
             $id = $db->fetchOne('SELECT id FROM app_user WHERE email = ?', [$input->getOption('keep-user')]);
             if ($id === false) { throw new \RuntimeException('Demo account not found; nothing erased.'); }
+            if ((int) $db->fetchOne('SELECT COUNT(*) FROM app_user WHERE admin_key IS NOT NULL AND id <> ?', [$id]) > 0) {
+                throw new \RuntimeException('Reset would delete the singleton administrator; nothing erased.');
+            }
             // Dependency order, no CASCADE outside these explicit WorkLook tables/databases.
             foreach (['messenger_messages', 'job_match', 'profile', 'agent_run', 'job'] as $table) {
                 if ($table === 'messenger_messages' && !$db->createSchemaManager()->tablesExist([$table])) { continue; }

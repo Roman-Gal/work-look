@@ -37,7 +37,7 @@ final class EmailRegistration
     /** Never disclose whether an address already has an account. Password is chosen only after email ownership. */
     public function request(string $email, string $locale): void
     {
-        if (!$this->isEnabled()) { return; }
+        if (!$this->isEnabled() || mb_strtolower($email) === User::ADMIN_EMAIL) { return; }
         $lock = $this->locks->createLock('register_'.hash('sha256', $email), 30);
         if (!$lock->acquire()) { return; }
         try {
@@ -72,7 +72,7 @@ final class EmailRegistration
         if (!$this->isEnabled() || !preg_match('/^[a-f0-9]{64}$/D', $token)) { return false; }
         $hash = hash('sha256', $token);
         $user = $this->em->getRepository(User::class)->findOneBy(['verificationHash' => $hash]);
-        if (!$user || $user->isVerified || !$user->verificationExpiresAt || $user->verificationExpiresAt <= new \DateTimeImmutable()) { return false; }
+        if (!$user || $user->email === User::ADMIN_EMAIL || $user->isVerified || !$user->verificationExpiresAt || $user->verificationExpiresAt <= new \DateTimeImmutable()) { return false; }
         $passwordHash = $this->hasher->hashPassword($user, $password);
         // Conditional UPDATE consumes the token atomically, including simultaneous requests on PostgreSQL.
         $count = $this->em->createQueryBuilder()->update(User::class, 'u')

@@ -21,6 +21,7 @@ final class CreateUserCommand extends Command
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $io = new SymfonyStyle($input, $output); $email = mb_strtolower(trim($input->getArgument('email')));
+        if ($email === User::ADMIN_EMAIL) { $io->error('Use app:admin:provision for the reserved administrator identity.'); return Command::INVALID; }
         if (!filter_var($email, FILTER_VALIDATE_EMAIL) || strlen($email) > 180) { $io->error('Вкажіть коректний email.'); return Command::INVALID; }
         if ($this->em->getRepository(User::class)->findOneBy(['email' => $email])) { $io->error('Користувач уже існує.'); return Command::INVALID; }
         $envName = $input->getOption('password-env');

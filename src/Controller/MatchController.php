@@ -10,12 +10,13 @@ use Symfony\Component\Routing\Attribute\Route;
 
 final class MatchController extends AbstractController
 {
-    public function __construct(private EntityManagerInterface $em, private CanonicalCv $cv, private CvPdfRenderer $pdfRenderer) {}
+    public function __construct(private EntityManagerInterface $em, private CanonicalCv $cv, private CvPdfRenderer $pdfRenderer, private \App\Service\ActivityRecorder $activity) {}
     private function owned(int $id): JobMatch
     {
-        return $this->em->createQueryBuilder()->select('m', 'r', 'j')->from(JobMatch::class, 'm')
-            ->join('m.run', 'r')->join('m.job', 'j')->where('m.id = :id AND r.user = :user')
-            ->setParameter('id', $id)->setParameter('user', $this->getUser())->getQuery()->getOneOrNullResult() ?? throw $this->createNotFoundException();
+        $qb = $this->em->createQueryBuilder()->select('m', 'r', 'j')->from(JobMatch::class, 'm')
+            ->join('m.run', 'r')->join('m.job', 'j')->where('m.id = :id')->setParameter('id', $id);
+        if (!$this->isGranted('ROLE_ADMIN')) { $qb->andWhere('r.user = :user')->setParameter('user', $this->getUser()); }
+        return $qb->getQuery()->getOneOrNullResult() ?? throw $this->createNotFoundException();
     }
     #[Route('/matches/{id}', name: 'app_match', methods: ['GET'])]
     public function show(int $id): Response
@@ -30,7 +31,12 @@ final class MatchController extends AbstractController
         if (!$this->isCsrfTokenValid('status_'.$id, $request->request->get('_token'))) { throw $this->createAccessDeniedException(); }
         $status = $request->request->get('status');
         if (!in_array($status, ['New', 'Reviewed', 'Applied', 'Skipped'], true)) { throw $this->createNotFoundException(); }
-        $match->status = $status; $this->em->flush();
+        $this->em->wrapInTransaction(function () use ($match, $status, $request, $id): void {
+            $match->status = $status; $this->em->flush();
+            if ($this->isGranted('ROLE_ADMIN') && !$this->activity->record($request, 'admin_action', 303, $this->getUser(), ['action' => 'match_status_changed', 'match_id' => $id, 'status' => $status])) {
+                throw new \RuntimeException('Administrator action audit unavailable.');
+            }
+        });
         return $this->redirectToRoute('app_match', ['id' => $id], Response::HTTP_SEE_OTHER);
     }
     #[Route('/matches/{id}/cv.pdf', name: 'app_cv_pdf', methods: ['GET'])]

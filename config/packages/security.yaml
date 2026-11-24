@@ -28,6 +28,7 @@ security:
         - { path: ^/login$, roles: PUBLIC_ACCESS }
         - { path: ^/(register|verify-email)$, roles: PUBLIC_ACCESS }
         - { path: ^/healthz$, roles: PUBLIC_ACCESS }
+        - { path: ^/admin(?:/|$), roles: ROLE_ADMIN }
         - { path: ^/, roles: ROLE_USER }
 when@test:
     security:

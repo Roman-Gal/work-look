@@ -1,0 +1,90 @@
+WorkLook administration and activity statistics
+2026-11-24
+
+The private /admin screen is separate from the normal search dashboard. Only the
+single administrator can access statistics and /admin/users. Navigation is visible
+only to that account. The interface supports Ukrainian, Polish and English.
+
+Administrator identity
+- User::ADMIN_EMAIL is fixed to rh-additional@rh-additional.usermd.net.
+- ROLE_ADMIN additionally requires the fixed ADMIN_KEY marker and verified email.
+  A unique database index prevents a second account holding the owner marker.
+- Public registration/verification and app:user:create cannot claim this identity.
+- Provision using app:admin:provision --password-env=WORKLOOK_ADMIN_PASSWORD.
+  The initial password must contain 15–128 bytes and is hashed normally. Keep the
+  environment variable private; do not put passwords in shell arguments or Git.
+- Repeat provisioning preserves the password. An existing unmarked account at the
+  reserved address is refused rather than silently taken over.
+- The administrator can inspect/edit profiles, inspect searches and private PDFs,
+  cancel active searches, change match statuses, and suspend/enable AI permission.
+  CSRF and normal validation still apply. No impersonation or password disclosure.
+- Access changes do not replenish free-search allowances, including the owner's.
+  No paid entitlement or unlimited AI usage is introduced by this feature.
+- Profile/access/status/cancellation changes made by the administrator require a
+  successful audit insert in the same transaction. Audit failure rolls back them.
+  Routine visit logging is best effort and never makes a page or gateway fail.
+- app:reset-test-data refuses to delete a separately provisioned administrator.
+
+Recorded data
+activity_event contains UTC time, event type, correlation/request ID, actor ID/email
+when known, IP, approximate country, optional city, known route/path, HTTP method,
+status and elapsed milliseconds, referring domain, browser family and device class.
+Login success/failure and logout are explicit events. Unexpected paths are stored
+as [unmatched]. Query strings, bodies, passwords, tokens, full referrer URLs, raw
+User-Agent headers, CV facts and profile contents are never copied into this table.
+Unknown IP/country remains unknown. IPs are not equivalent to people. Anonymous
+visitors are not fingerprinted and receive no new tracking cookie.
+
+The overview reports successful HTML page requests, distinct IPs for those views,
+successful/failed logins and registered accounts. Registered-account count is the
+current total; other cards use the selected rolling 1/7/30/90-day period. Daily bars
+use UTC dates, including zero-activity days. Individual timestamps display Warsaw
+time. Admin screens, health checks, assets and Turbo Frame polls do not add views.
+Bot/crawler browser families are labelled heuristically; human-only counts are not
+claimed. Referrer can be missing or spoofed and is not a verified attribution source.
+The log supports event/country/error filters and email, actor ID, IP or request-ID
+search, with 50 records per page. The overview keeps its period-wide scope while
+the event filters affect the table. The user list is searchable and paginated.
+
+Telegram is outside the scope of this implementation. Both existing gateway paths
+are explicitly excluded, including rejected webhook requests. No bot bodies,
+identities or deliveries are analysed; no bot database, registration or runtime is
+changed. A future independent service can implement bot-specific analytics.
+
+IP location and proxy boundary
+maxmind-db/reader reads var/geoip/location.mmdb locally. Run app:geoip:update to
+download DB-IP Country Lite for the current UTC month (or --month=YYYY-MM). HTTPS
+downloads have fixed URLs, size/time limits, no redirects, structural verification,
+a lock and atomic replacement. A failed update preserves the previous database.
+No visitor IP is sent to DB-IP or another lookup provider. The included updater
+provides countries, not cities. A compatible local city MMDB can populate the
+optional city field. Database files stay ignored and outside public/.
+DB-IP Lite is CC BY 4.0; /admin links to https://db-ip.com for attribution.
+Country accuracy is approximate, particularly with VPNs, proxies and mobile ISPs.
+Private/reserved IPs have no country. Without a usable local MMDB, visits are still
+recorded with unknown geography.
+Request::getClientIp() uses Symfony's trust boundary. No forwarded-IP header is
+trusted by this change. If a reverse proxy is introduced, configure only verified
+proxy ranges and review the host's actual REMOTE_ADDR behaviour before deployment.
+
+Retention and hosting
+Migration Version20261124160000 adds the administrator marker and activity table.
+It does not erase existing records or grant anyone administrator privileges.
+The feature begins recording only after deployment; historical visits are not
+reconstructed. There is no external analytics collector or extra application.
+Keep var/geoip shared between releases, like private runtime logs.
+
+Install host cron entries (server timezone; use the existing PHP84 executable):
+  47 3 * * * cd /usr/home/RH-additional/apps/work-look/current && /usr/local/bin/php84 bin/console app:activity:prune --env=prod --no-debug
+  41 4 3 * * cd /usr/home/RH-additional/apps/work-look/current && /usr/local/bin/php84 bin/console app:geoip:update --env=prod --no-debug
+Prune removes ordinary events older than 90 days and administrator actions older
+than 365 days. --dry-run reports the count without deleting records. These are
+WorkLook-only jobs. Existing worker and bot cron entries must be preserved.
+Retention applies to the live table. Existing private backups expire under their
+separate retention policy. The audit is not tamper-proof against the hosting owner.
+
+References
+https://symfony.com/doc/7.4/security.html
+https://symfony.com/doc/7.4/deployment/proxies.html
+https://github.com/maxmind/MaxMind-DB-Reader-php
+https://db-ip.com/db/download/ip-to-country-lite

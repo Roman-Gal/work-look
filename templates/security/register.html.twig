@@ -2,6 +2,7 @@
 {% set heading = 'registration.title' %}
 {% block account_form %}
 <p class="muted">{{ 'registration.intro'|trans }}</p>
+<p class="help-text">{{ 'admin.privacy'|trans }}</p>
 {% if notice %}<div class="flash success" role="status">{{ notice|trans }}</div>{% endif %}
 {% if error %}<div class="flash warning" role="alert">{{ error|trans }}</div>{% endif %}
 {% if enabled %}<form method="post" data-turbo="false"><input type="hidden" name="_token" value="{{ csrf_token('register') }}"><label for="email">Email</label><input id="email" type="email" name="email" value="{{ email }}" maxlength="180" autocomplete="email" required><button class="button primary full" type="submit">{{ 'registration.submit'|trans }} →</button></form><p class="login-help">{{ 'trial.one_free'|trans }}</p>{% else %}<div class="flash warning">{{ 'registration.unavailable'|trans }}</div>{% endif %}
