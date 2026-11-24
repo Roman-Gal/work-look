@@ -2,7 +2,7 @@
     {% for locale, label in {uk: 'Українська', pl: 'Polski', en: 'English'} %}
         <form action="{{ path('app_language', {locale: locale}) }}" method="post" data-turbo="false">
             <input type="hidden" name="_token" value="{{ csrf_token('language') }}">
-            <input type="hidden" name="return_to" value="{{ app.request.pathInfo }}">
+            <input type="hidden" name="return_to" value="{{ app.request.attributes.get('_route') == 'app_resume_prepare' ? path('app_resume') : app.request.pathInfo ~ (app.request.attributes.get('_route') == 'app_profile' and app.request.query.get('resume') == '1' ? '?resume=1' : '') }}">
             <button type="submit" lang="{{ locale }}" title="{{ label }}" aria-label="{{ label }}" {% if app.request.locale == locale %}aria-current="true"{% endif %}>{{ locale == 'uk' ? 'UA' : locale|upper }}</button>
         </form>
     {% endfor %}

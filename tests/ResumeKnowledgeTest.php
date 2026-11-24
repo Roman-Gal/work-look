@@ -205,4 +205,16 @@ final class ResumeKnowledgeTest extends WebTestCase
         $page=$this->client->request('GET','/resume'); $this->client->submit($page->filter('form[action="/resume/remove"]')->form()); self::assertResponseRedirects('/resume',303);
         self::assertSame(0,(int)$this->em->getConnection()->fetchOne('SELECT COUNT(*) FROM resume_draft')); self::assertSame('Original confirmed fact.',$this->em->getConnection()->fetchOne('SELECT facts_text FROM profile'));
     }
+    public function testLanguageSwitchKeepsResumeKnowledgeAndPreparedProfileContext(): void
+    {
+        $this->upload(); $page=$this->client->request('GET','/resume');
+        $this->client->submit($page->filter('form[action="/language/pl"]')->form()); self::assertResponseRedirects('/resume',303);
+        $this->client->followRedirect(); self::assertSelectorTextContains('h1','CV bez zbędnego wypełniania');
+        $page=$this->client->request('GET','/knowledge'); $this->client->submit($page->filter('form[action="/language/en"]')->form());
+        self::assertResponseRedirects('/knowledge',303); $this->client->followRedirect(); self::assertSelectorTextContains('h1','Knowledge base');
+        $data=['display_name'=>'Jane Doe','headline'=>'PHP Developer','contact_line'=>'','facts'=>['PHP development at Example Ltd, 2020-2024.']];
+        $page=$this->client->request('GET','/resume'); $this->client->submit($page->filter('form[action="/resume/prepare"]')->form(['profile_json'=>json_encode($data)]));
+        $page=$this->client->followRedirect(); $this->client->submit($page->filter('form[action="/language/uk"]')->form());
+        self::assertResponseRedirects('/profile?resume=1',303); $this->client->followRedirect(); self::assertSelectorExists('input[value="Jane Doe"]');
+    }
 }
