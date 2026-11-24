@@ -205,7 +205,8 @@ php bin/console doctrine:schema:validate
 composer audit
 ~~~
 
-The latest suite passed **68 tests and 531 assertions**. Tests guard the disposable
+The latest full suite passed **68 tests and 531 assertions**; three focused language
+tests then passed with 53 assertions for the final route-context change. Tests guard the disposable
 database name before rebuilding its schema and mock external API calls. Coverage
 includes ownership, CSRF, login, escaping, PDFs, immutable facts, sources/XXE,
 verification/expiry/token reuse/throttling, SMTP failures, quotas, queue rollback,
@@ -233,9 +234,12 @@ current. Docker is optional locally and is not a hosting requirement.
 | [Specification](docs/specification.txt) | Original goals and later product decisions |
 | [Research](docs/research/00-README.txt) | API/RSS findings, contracts, requests and dated evidence |
 
-Verified runtime: 8b7295c (administration and activity statistics). Later documentation-only commits do not require a new
-application release. WorkLook test data was cleared on 24 November 2026, keeping
-the demo login/password. Telegram bots and their databases were preserved.
+Verified runtime: 3f9092e (private text-PDF intake, manual profile preparation and
+reviewed search knowledge, alongside administration and activity statistics).
+Later documentation-only commits do not require a new application release.
+The latest deployment preserved all three users and the existing profile; it did
+not reset data, make an AI request or consume a free search. Telegram bots and
+their databases were preserved.
 
 An explicit test reset is available after stopping the WorkLook worker:
 

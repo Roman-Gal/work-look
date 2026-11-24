@@ -1,4 +1,46 @@
-CURRENT VERIFIED ADMINISTRATION RELEASE — 2026-11-24
+CURRENT VERIFIED RESUME AND KNOWLEDGE RELEASE — 2026-11-24
+URL: https://rh-additional.usermd.net/
+Runtime: 3f9092ea9116aba78a8b898a4e2eabb609a88b4c.
+Previous feature baseline: 8b7295c8e00447f4392538ecd2b6a26539bf7c5d.
+
+Deployed and checked:
+ - Private /resume text-PDF intake, preferences and manual AI prompt download.
+ - Manual JSON preparation requires source excerpts and explicit profile confirmation.
+ - No OCR, persistent original PDF, paid model request or allowance consumption.
+ - /knowledge: reviewed shared site tips plus owner-private search prompts.
+ - Five idempotent seed entries; administrator-only shared editing and action audit.
+ - Agent get_search_knowledge tool scopes results to the owner and allowed sources.
+ - Additive migration Version20261124180000; no data reset or import.
+ - Final counts: app_user=3, profile=1, administrators=1, resume_draft=0,
+   shared knowledge entries=5; agent_run/job/job_match/messenger_messages=0.
+ - Actual HTTPS web-PHP PDF extraction passed (synthetic file, no database writes).
+ - Pure-PHP parsing respects the host's disabled proc_open and open_basedir;
+   provider restrictions remain unchanged. Only RESUME_PHP_BINARY was added to env.
+ - Authenticated pages and language switching checked in UA/PL/EN; guest access
+   redirects to login and an ordinary account cannot publish shared knowledge.
+ - Administrator login, private no-store and CSP checks passed.
+ - Exactly one current-release PHP WorkLook worker; existing cron preserved.
+ - Telegram code, databases, cron and webhooks unchanged.
+ - Host OpenAI key remains absent; existing DB password kept at owner's request.
+ - All transient public helpers removed. Temporary SSH key revoked, fresh key-only
+   login rejected and local key pair removed; other authorized lines preserved.
+
+Pre-migration backup: worklook-20261124T170638Z.dump.
+Final activation backup: worklook-20261124T171609Z.dump.
+Both custom-format archive lists validated; existing backups were retained.
+Full local suite: 68 tests / 531 assertions. Final language patch: three focused
+tests / 53 assertions; Twig lint passed. Container/YAML/schema checks and Composer
+audit passed. Local browser preview covered resume preparation and KB; the native
+file chooser failed, so upload coverage comes from integration tests and the real
+HTTPS web-PHP extraction check rather than a completed browser file selection.
+Private evidence: var/deploy/resume-kb-validation-result.json,
+resume-kb-web-result.json, resume-kb-native-result.json, resume-kb-language-result.json
+and resume-kb-key-cleanup-result.json; host reports under apps/deploy-logs/.
+Later documentation-only commits do not require a separate runtime deployment.
+
+The following snapshots describe earlier releases, not the current data inventory.
+
+PREVIOUS VERIFIED ADMINISTRATION RELEASE — 2026-11-24
 URL: https://rh-additional.usermd.net/
 Runtime: 8b7295c8e00447f4392538ecd2b6a26539bf7c5d.
 Previous runtime: 9d4d29bd0596aac645a4a5d445a0297a95bab303.
