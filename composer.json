@@ -12,7 +12,7 @@
         "doctrine/doctrine-migrations-bundle": "^3.7",
         "doctrine/orm": "^3.8",
         "dompdf/dompdf": "^3.1",
-        "maxmind-db/reader": "^1.13",
+        "maxmind-db/reader": "~1.14.0",
         "symfony/asset": "7.4.*",
         "symfony/asset-mapper": "7.4.*",
         "symfony/console": "7.4.*",

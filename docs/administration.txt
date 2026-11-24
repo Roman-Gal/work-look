@@ -52,8 +52,11 @@ identities or deliveries are analysed; no bot database, registration or runtime 
 changed. A future independent service can implement bot-specific analytics.
 
 IP location and proxy boundary
-maxmind-db/reader reads var/geoip/location.mmdb locally. Run app:geoip:update to
-download DB-IP Country Lite for the current UTC month (or --month=YYYY-MM). HTTPS
+maxmind-db/reader reads var/geoip/location.mmdb locally.
+The reader is pinned to 1.14.x for MyDevil's installed ext-maxminddb 1.14.0; keep
+the PHP package and optional native extension compatible when updating either.
+Run app:geoip:update to download DB-IP Country Lite for the current UTC month
+(or --month=YYYY-MM). HTTPS
 downloads have fixed URLs, size/time limits, no redirects, structural verification,
 a lock and atomic replacement. A failed update preserves the previous database.
 No visitor IP is sent to DB-IP or another lookup provider. The included updater
