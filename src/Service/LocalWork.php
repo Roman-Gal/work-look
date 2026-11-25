@@ -37,8 +37,20 @@ final class LocalWork
     }
     public function package(LocalWorkRequest $job): array
     {
+        $input=$job->input;$input['resume_links']=$this->sourceLinks($job);
         return ['schema_version'=>1,'request_id'=>$job->id,'locale'=>$job->locale,'created_at'=>$job->createdAt->format(DATE_ATOM),
-            'input'=>$job->input,'knowledge'=>$this->knowledge($job), 'instructions'=>self::instructions()];
+            'input'=>$input,'knowledge'=>$this->knowledge($job), 'instructions'=>self::instructions()];
+    }
+    public function sourceLinks(LocalWorkRequest $job): array
+    {
+        $links=(new CvLinks())->extract($job->input['resume_text']??'');
+        try{
+            $source=(new TextPdfParser())->parseBytes($job->pdfBytes());
+            $links=array_values(array_unique([...$links,...$source['links']]));
+        }catch(\Throwable){
+            // A damaged legacy source must not block downloading an already reviewed CV.
+        }
+        return $links;
     }
     public static function instructions(): string
     {
@@ -52,6 +64,8 @@ For each match, explain fit and missing requirements. Salary must include curren
 Prepare a tailored plain-text CV for each suitable match. Rephrase, reorder and shorten supported facts without inventing skills, seniority,
 employers, dates, achievements, qualifications, language levels or eligibility. Keep personal projects separate from employment.
 Do not silently add desired job skills to the CV. Cite supporting verbatim CV excerpts in evidence. Omit tailored CVs for unsuitable matches.
+Preserve the candidate's GitHub, LinkedIn, portfolio, website and email links from this source, including input.resume_links and PDF link annotations.
+Keep the exact destinations; do not infer profile URLs from a name. Use explicit URLs or [label](https://...) in cv_text, never HTML.
 No applications or emails to employers. No paid APIs, credentials, website administration or reading other job folders.
 Return JSON matching result.schema.json. Copy request_id and source_sha256 exactly. Use the requested interface language for explanations;
 use the vacancy/CV language for cv_text. Do not include HTML. The operator must review the output before publishing.

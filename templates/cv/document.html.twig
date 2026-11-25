@@ -1,7 +1,7 @@
 {% extends 'cv/layout.html.twig' %}
 {% block cv_content %}
-<header class="cv-header"><h1>{{ profile.display_name }}</h1><p class="headline">{{ profile.headline }}</p><div class="contacts">{{ profile.contact_line }}</div></header>
-<section class="cv-section"><h2>{{ 'cv.target'|trans }}</h2><p>{{ match.jobSnapshot.title }}</p></section>
-<section class="cv-section"><h2>{{ 'cv.experience'|trans }}</h2><ul>{% for fact in facts %}<li>{{ fact.text }}</li>{% endfor %}</ul></section>
+<header class="cv-header"><h1>{{ profile.display_name }}</h1><p class="headline">{{ cvLinks.render(profile.headline) }}</p><div class="contacts">{{ cvLinks.render(profile.contact_line) }}</div></header>
+<section class="cv-section"><h2>{{ 'cv.target'|trans }}</h2><p>{{ cvLinks.render(match.jobSnapshot.title) }}</p></section>
+<section class="cv-section"><h2>{{ 'cv.experience'|trans }}</h2><ul>{% for fact in facts %}<li>{{ cvLinks.render(fact.text) }}</li>{% endfor %}</ul></section>
 <p class="cv-note">{{ 'cv.footer'|trans }} {{ profile.version|slice(0, 12) }}.</p>
 {% endblock %}

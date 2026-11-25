@@ -88,6 +88,18 @@ final class ResumeKnowledgeTest extends WebTestCase
         $result=self::getContainer()->get(ResumeTextExtractor::class)->extract(new UploadedFile($this->file($pdf->output()),'cv.pdf','application/pdf',test:true));
         self::assertStringContainsString('Роман Галайко',$result['text']); self::assertStringContainsString('Łódź',$result['text']);
     }
+    public function testHiddenPdfLinkDestinationsSurviveTextImport(): void
+    {
+        $pdf=new \Dompdf\Dompdf(new \Dompdf\Options(['isRemoteEnabled'=>false,'isJavascriptEnabled'=>false,'isPhpEnabled'=>false]));
+        $pdf->loadHtml('<html><body><p>Jane Example, PHP Developer with verified experience.</p><p><a href="https://github.com/example-candidate">GitHub</a> <a href="https://www.linkedin.com/in/example-candidate/">LinkedIn</a> <a href="https://example.test/portfolio?ref=cv&amp;lang=en">Portfolio</a> <a href="javascript:alert(1)">Unsafe</a></p></body></html>');
+        $pdf->render();$path=$this->file($pdf->output());
+        $parsed=(new \App\Service\TextPdfParser())->parse($path);
+        $expected=['https://github.com/example-candidate','https://www.linkedin.com/in/example-candidate/','https://example.test/portfolio?ref=cv&lang=en'];
+        self::assertSame($expected,$parsed['links']);
+        $imported=self::getContainer()->get(ResumeTextExtractor::class)->extract(new UploadedFile($path,'cv.pdf','application/pdf',test:true));
+        foreach($expected as $url){self::assertStringContainsString($url,$parsed['text']);self::assertStringContainsString($url,$imported['text']);}
+        self::assertStringNotContainsString('javascript:',$imported['text']);
+    }
     public function testInRequestParserUsesTheSameLimitsAndRestoresMemorySettings(): void
     {
         $memory=ini_get('memory_limit'); $parser=new \App\Service\TextPdfParser();

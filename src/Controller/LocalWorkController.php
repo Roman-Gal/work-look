@@ -43,11 +43,11 @@ final class LocalWorkController extends AbstractController
     #[Route('/requests/{id}', name:'app_local_result', requirements:['id'=>'[a-f0-9]{32}'], methods:['GET'])]
     public function result(string $id): Response { return $this->render('local_work/result.html.twig',['job'=>$this->owned($id)]); }
     #[Route('/requests/{id}/cv/{index}.pdf', name:'app_local_cv', requirements:['id'=>'[a-f0-9]{32}','index'=>'[0-9]'], methods:['GET'])]
-    public function cv(string $id, int $index, CvPdfRenderer $pdf): Response
+    public function cv(string $id, int $index, CvPdfRenderer $pdf, LocalWork $work): Response
     {
         $job=$this->owned($id); $match=$job->result['matches'][$index]??null;
         if ($job->status!=='completed' || !$match || $match['cv_text']==='') { throw $this->createNotFoundException(); }
-        return new Response($pdf->renderPrepared($match['cv_text']),200,['Content-Type'=>'application/pdf','Content-Disposition'=>'attachment; filename="worklook-cv-'.($index+1).'.pdf"']);
+        return new Response($pdf->renderPrepared($match['cv_text'],$work->sourceLinks($job)),200,['Content-Type'=>'application/pdf','Content-Disposition'=>'attachment; filename="worklook-cv-'.($index+1).'.pdf"']);
     }
     #[Route('/requests/{id}/remove', name:'app_local_remove', requirements:['id'=>'[a-f0-9]{32}'], methods:['POST'])]
     public function remove(string $id, Request $request, LockFactory $locks): Response

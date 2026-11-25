@@ -21,7 +21,7 @@ Candidate facts must remain supported by the source CV. Users control applicatio
 - Private database-backed text-PDF intake, privacy acknowledgement and saved search requests.
 - Operator-triggered local downloads, optional Codex CLI processing and reviewed result uploads.
 - Account results, owner-only PDF CVs and branded email notifications.
-- Branded CV layouts with embedded Zakon Text, shared brand colors and a subtle linked footer.
+- Branded CV layouts with embedded Zakon Text, shared colors, preserved clickable candidate links and a subtle "Powered by WorkLook" footer.
 - Reviewed search knowledge and private saved prompts, accessible to the search agent.
 
 There is no autonomous search schedule or automatic application submission.
@@ -209,7 +209,7 @@ php bin/console doctrine:schema:validate
 composer audit
 ~~~
 
-The latest full suite passed **96 tests and 694 assertions**. The local transfer
+The latest full suite passed **117 tests and 761 assertions**. The local transfer
 utility also passed eight tests, including Windows credential encryption. Tests guard the disposable
 database name before rebuilding its schema and mock external API calls. Coverage
 includes ownership, CSRF, login, escaping, PDFs, immutable facts, sources/XXE,

@@ -2,7 +2,7 @@
 declare(strict_types=1);
 namespace App\Tests;
 
-use App\Service\{BrandPalette, CvPdfRenderer, PreparedCvLayout};
+use App\Service\{BrandPalette, CvLinks, CvPdfRenderer, PreparedCvLayout};
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Twig\{Environment, Loader\FilesystemLoader};
@@ -42,12 +42,12 @@ final class PreparedCvLayoutTest extends TestCase
     {
         $text="Example <script>alert(1)</script>\nDeveloper\n\nSKILLS\n<img src=\"https://example.test/private\">\nEXPERIENCE\n- <a href=\"javascript:alert(1)\">Untrusted text</a>";
         $html=$this->twig()->render('cv/prepared.html.twig',[
-            'cv'=>(new PreparedCvLayout())->parse($text),'cvBrandUrl'=>'https://worklook.test/',
+            'cv'=>(new PreparedCvLayout())->parse($text),'cvBrandUrl'=>'https://worklook.test/','cvLinks'=>new CvLinks(),
         ]);
         self::assertStringNotContainsString('<script>',$html);
         self::assertStringNotContainsString('<img ',$html);
         self::assertStringContainsString('&lt;img',$html);
-        self::assertSame(1,substr_count($html,'<a href='));
+        self::assertStringNotContainsString('href="javascript:',$html);
         self::assertStringContainsString('href="https://worklook.test/"',$html);
     }
     #[DataProvider('origins')]

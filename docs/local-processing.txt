@@ -76,10 +76,21 @@ sections. Known Polish, Ukrainian and English headings are classified for layout
 unrecognized content stays in the flowing body. Candidate text is escaped and
 preserved rather than expanded with invented experience. Both prepared and
 canonical-fact PDFs use this design and the shared brand palette. Every page has
-a small, light credit linked to the trusted HTTPS DEFAULT_URI origin. Re-downloading
+a small, light "Powered by WorkLook" credit linked to the trusted HTTPS DEFAULT_URI origin. Re-downloading
 an existing result picks up the current template without republishing or email.
 All three existing short CVs fit one page; a six-page Ukrainian fixture retained
 its text, embedded fonts and linked footer on every page with no overlap.
+
+Candidate web/email addresses and Markdown-labelled links become clickable PDF
+annotations with escaped visible text. HTTP/HTTPS and plain mailto addresses are
+supported; unsafe schemes, credentials and email header injection are rejected.
+PDF intake also reads URI link annotations, retaining destinations hidden behind
+labels such as GitHub/LinkedIn in the extracted text. Packages expose resume_links
+derived from the same request's original PDF, including older saved requests.
+Prepared PDFs restore source destinations omitted from a reviewed CV, with compact
+labels and exact underlying URLs. No profile URL is guessed from a candidate name,
+and no linked resource is fetched. Source PDFs, saved results and notification
+timestamps are unchanged when the presentation restores links.
 
 The privacy notice identifies Roman Halaiko and the provided contact mailbox.
 It describes service purposes, local operator/OpenAI processing, possible non-EEA

@@ -14,13 +14,17 @@ final class CvPdfRenderer
     public function render(JobMatch $match, array $facts): string
     {
         return $this->document($this->twig->render('cv/document.html.twig', [
-            'match' => $match, 'profile' => $match->run->profileSnapshot, 'facts' => $facts, 'cvBrandUrl'=>$this->brandUrl(),
+            'match' => $match, 'profile' => $match->run->profileSnapshot, 'facts' => $facts, 'cvBrandUrl'=>$this->brandUrl(), 'cvLinks'=>new CvLinks(),
         ]));
     }
-    public function renderPrepared(string $text): string
+    public function renderPrepared(string $text, array $sourceLinks = []): string
     {
+        $links=new CvLinks();$known=$links->extract($text);$missing=[];
+        foreach($sourceLinks as $source){
+            if(is_string($source) && ($url=$links->target($source))!==null && !in_array($url,$known,true)){$missing[]=$url;$known[]=$url;}
+        }
         return $this->document($this->twig->render('cv/prepared.html.twig',[
-            'cv'=>(new PreparedCvLayout())->parse($text),'cvBrandUrl'=>$this->brandUrl(),
+            'cv'=>(new PreparedCvLayout())->parse($text),'cvBrandUrl'=>$this->brandUrl(),'cvLinks'=>$links,'sourceLinks'=>$missing,
         ]));
     }
     private function brandUrl(): string

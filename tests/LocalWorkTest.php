@@ -112,6 +112,20 @@ final class LocalWorkTest extends WebTestCase
         $this->client->request('GET','/requests/'.$job->id.'/cv/0.pdf');self::assertResponseIsSuccessful();self::assertStringStartsWith('%PDF-',$this->client->getResponse()->getContent());
         $this->client->loginUser($this->other);$this->client->request('GET','/requests/'.$job->id.'/cv/0.pdf');self::assertResponseStatusCodeSame(404);
     }
+    public function testOriginalLinksReachThePackageAndPdfEvenWhenReviewedTextOmitsThem(): void
+    {
+        $job=$this->job();$original=new \Dompdf\Dompdf(new \Dompdf\Options(['isRemoteEnabled'=>false]));
+        $original->loadHtml('<p>Jane Doe, PHP development at Example Ltd, 2021-present.</p><p><a href="https://github.com/example-candidate">GitHub</a> <a href="https://www.linkedin.com/in/example-candidate/">LinkedIn</a></p>');
+        $original->render();$job->pdfData=$original->output();$job->input['source_sha256']=hash('sha256',$job->pdfData);
+        $job->result=$this->validResult($job);$job->status='completed';$this->em->flush();
+        $expected=['https://github.com/example-candidate','https://www.linkedin.com/in/example-candidate/'];
+        $this->worker('GET',$job->id.'/package');self::assertResponseIsSuccessful();
+        self::assertSame($expected,json_decode($this->client->getResponse()->getContent(),true)['input']['resume_links']);
+        $this->client->loginUser($this->owner);$this->client->request('GET','/requests/'.$job->id.'/cv/0.pdf');self::assertResponseIsSuccessful();
+        $parsed=(new \App\Service\TextPdfParser())->parseBytes($this->client->getResponse()->getContent());
+        foreach([...$expected,'https://worklook.test/'] as $url){self::assertContains($url,$parsed['links']);}
+        self::assertStringContainsString('Powered by WorkLook',$parsed['text']);self::assertEmailCount(0);
+    }
     public function testDeletedRequestDisappearsFromWorkerAndPreservesMainDraft(): void
     {
         $job=$this->job();$this->client->loginUser($this->owner);$page=$this->client->request('GET','/requests/'.$job->id);

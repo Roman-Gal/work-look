@@ -21,6 +21,7 @@ final class PreparedCvLayout
         'SKILLS'=>'skills', 'TECHNICAL SKILLS'=>'skills', 'TECHNOLOGIES'=>'skills',
         'EDUCATION'=>'education', 'LANGUAGES'=>'languages', 'CERTIFICATES'=>'certificates',
         'CERTIFICATIONS'=>'certificates', 'COURSES'=>'certificates', 'PROJECTS'=>'projects', 'PERSONAL PROJECTS'=>'projects',
+        'LINKS'=>'links', 'LINKI'=>'links', 'ПОСИЛАННЯ'=>'links',
     ];
     private function kind(string $line): ?string
     {
