@@ -1,6 +1,6 @@
 WorkLook operator-assisted processing — 2026-11-25
 
-Three-stage workflow update (prepared locally; deployment recorded separately)
+Three-stage workflow update (deployed runtime 1fd05e0)
 -------------------------------------------------------------------------
 New requests snapshot selected_sources, requested_language (auto/pl/uk/en),
 adaptation_mode (enhanced/strict), source/output language hints, interface locale
@@ -44,6 +44,18 @@ Protocol 2 publication validates language choice, selected-source vacancy domain
 coverage of every selected source, candidate-link containment, adaptation kinds
 and quoted bases. Legacy protocol 1 completion/retry stays compatible. Production
 email sends and real inference are excluded from installation/testing.
+
+Deployment verified on 2026-11-25: native PHP 8.4 container/Twig/schema checks,
+protocol-2 validation, classified-link PDF rendering and a Polish language hint
+passed. HTTPS / and /resume expose all eight checkboxes, output-language and
+adaptation selectors with compiled CSS and resolved translations. A metadata-only
+check of the owner's previously supplied request confirmed package protocol 2,
+selected source metadata, three-stage instructions and ignore_images=true; no
+candidate content was saved/logged. Native probes used synthetic data only.
+Core counts and saved request/result hashes, environment and cron were unchanged.
+No real inference, publication or email was performed. The temporary SSH key was
+revoked, fresh login denied and the local pair removed. Evidence is in private
+var/deploy/workflow3-*.json and apps/deploy-logs/workflow3-*.
 
 The initial MVP uses a manual daily operator workflow. MyDevil stores source PDFs
 as private PostgreSQL BYTEA values, alongside extracted text and versioned privacy
