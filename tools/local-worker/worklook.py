@@ -106,13 +106,14 @@ def setup(root: Path, origin: str) -> None:
     root.mkdir(parents=True, exist_ok=True)
     token = secrets.token_hex(32)
     digest = hashlib.sha256(token.encode()).hexdigest()
-    save_json(config, {'origin': origin.rstrip('/'), 'token_dpapi': base64.b64encode(dpapi(token.encode())).decode(), 'server_token_sha256': digest})
+    save_json(config, {'origin': origin.rstrip('/'), 'token_dpapi': base64.b64encode(dpapi(token.encode())).decode(), 'server_token_sha256': digest,
+        'codex_executable': shutil.which('codex')})
     atomic(root / 'RUN_TODAY.md', DAILY.encode('utf-8'))
     atomic(root / 'AGENTS.md', DAILY.encode('utf-8'))
     save_json(root / 'connection-server-setting.json', {'LOCAL_WORKER_TOKEN_SHA256': digest})
     script = Path(__file__).resolve()
     for filename, action in [('01-Download.cmd','download'),('02-Download-and-Codex.cmd','download-and-run'),('03-Publish-reviewed.cmd','publish')]:
-        command = '@echo off\r\nset PYTHONUTF8=1\r\npython "'+str(script)+'" '+action+' --root "'+str(root)+'"\r\npause\r\n'
+        command = '@echo off\r\nset PYTHONUTF8=1\r\n"'+sys.executable+'" "'+str(script)+'" '+action+' --root "'+str(root)+'"\r\npause\r\n'
         atomic(root / filename, command.encode('utf-8'))
     print('Private Windows connection created. Server setting (not the secret token):')
     print('LOCAL_WORKER_TOKEN_SHA256=' + digest)
@@ -223,6 +224,10 @@ def sync(root: Path):
 
 def run_codex(root: Path):
     codex = shutil.which('codex')
+    if not codex and (root / '.connection.json').exists():
+        saved = json.loads((root / '.connection.json').read_text(encoding='utf-8')).get('codex_executable')
+        if saved and Path(saved).is_file() and Path(saved).name.lower() == 'codex.exe':
+            codex = saved
     if not codex:
         raise TransferError('Codex CLI was not found. Open RUN_TODAY.md in the Codex app instead.')
     manifest = inventory((root / 'remote-manifest.json').read_bytes())

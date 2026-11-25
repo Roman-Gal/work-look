@@ -30,7 +30,9 @@ Do not confuse the Windows launchers with commands to paste into the chat.
 
 The CLI button enforces forced_login_method=chatgpt, removes API key environment
 variables and requests live web search. It needs an installed, signed-in Codex CLI
-on PATH. It consumes the operator's subscription allowance only when clicked.
+on PATH or at the executable location saved during setup. Launchers pin the local
+Python executable so they also work when double-clicked from Explorer. It consumes
+the operator's subscription allowance only when clicked.
 CLI availability/flags/login were checked; real inference is deliberately not run
 by installation or tests. Job folders keep private logs. A failed/limited run
 stops the batch, retains finished outputs, and names partial output
