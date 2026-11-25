@@ -31,6 +31,15 @@ Native email delivery remains untested for this release; null transport verified
 message construction/recipient/link and retry behavior in isolated tests. Existing
 SMTP configuration was preserved. Webfont support depends on the email client.
 
+Publication repair verified later on 25 November:
+ - Client now transfers reviewed JSON as document bytes; no server code or WAF
+   configuration change was needed. Older result files remain compatible.
+ - The first real reviewed request is completed: five vacancies and three CVs.
+ - Notification accepted by SMTP; owner result page and three PDFs checked.
+ - Local completion receipt saved; reviewed JSON remained byte-for-byte unchanged.
+ - Final regression coverage: 80 PHP tests / 658 assertions and eight Python tests.
+ - No AI inference, new SSH access or additional result generation was required.
+
 Local operator workspace: JOBFIND/WorkLook-Local.
 01-Download.cmd downloads packages and shared KB, without an AI call.
 02-Download-and-Codex.cmd additionally runs subscription-authenticated Codex CLI.

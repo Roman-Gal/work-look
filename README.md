@@ -208,8 +208,8 @@ php bin/console doctrine:schema:validate
 composer audit
 ~~~
 
-The latest full suite passed **78 tests and 644 assertions**. The local transfer
-utility also passed six tests, including Windows credential encryption. Tests guard the disposable
+The latest full suite passed **80 tests and 658 assertions**. The local transfer
+utility also passed eight tests, including Windows credential encryption. Tests guard the disposable
 database name before rebuilding its schema and mock external API calls. Coverage
 includes ownership, CSRF, login, escaping, PDFs, immutable facts, sources/XXE,
 verification/expiry/token reuse/throttling, SMTP failures, quotas, queue rollback,

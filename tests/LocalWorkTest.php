@@ -141,4 +141,29 @@ final class LocalWorkTest extends WebTestCase
         $this->client->request('GET','/requests');self::assertResponseIsSuccessful();self::assertSelectorCount(50,'.run-row');self::assertSelectorExists('a[href="/requests?page=2"]');
         $this->client->request('GET','/requests?page=2');self::assertResponseIsSuccessful();self::assertSelectorCount(1,'.run-row');
     }
+    private function uploadResult(LocalWorkRequest $job,string $body,bool $reviewed=true,bool $authorized=true): void
+    {
+        $headers=['CONTENT_TYPE'=>'application/octet-stream','HTTP_CONTENT_DISPOSITION'=>'attachment; filename="result.json"'];
+        if($reviewed){$headers['HTTP_X_OPERATOR_REVIEWED']='yes';}
+        if($authorized){$headers['HTTP_AUTHORIZATION']='Bearer '.self::TOKEN;}
+        $this->client->request('POST','/internal/local-work/'.$job->id.'/result',server:$headers,content:$body);
+    }
+    public function testDocumentPublicationPreservesAuthorizationReviewAndContentValidation(): void
+    {
+        $job=$this->job();$result=$this->validResult($job);$body=json_encode($result,JSON_UNESCAPED_UNICODE|JSON_THROW_ON_ERROR);
+        $this->uploadResult($job,$body,authorized:false);self::assertResponseStatusCodeSame(401);
+        $this->uploadResult($job,$body,reviewed:false);self::assertResponseStatusCodeSame(400);
+        $bad=$result;$bad['source_sha256']=str_repeat('0',64);$this->uploadResult($job,json_encode($bad));self::assertResponseStatusCodeSame(422);
+        $bad=$result;$bad['matches'][0]['evidence']=['Invented commercial React experience'];$this->uploadResult($job,json_encode($bad));self::assertResponseStatusCodeSame(422);
+        $this->uploadResult($job,$body);self::assertResponseIsSuccessful();self::assertEmailCount(1);
+        $this->uploadResult($job,$body);self::assertResponseIsSuccessful();self::assertEmailCount(0);
+    }
+    public function testOversizedOrMalformedDocumentCannotPublish(): void
+    {
+        $job=$this->job();
+        $this->uploadResult($job,str_repeat('x',500001));self::assertResponseStatusCodeSame(400);
+        $this->uploadResult($job,'not JSON');self::assertResponseStatusCodeSame(400);
+        $this->uploadResult($job,'[]');self::assertResponseStatusCodeSame(422);
+        $this->em->clear();self::assertNull($this->em->find(LocalWorkRequest::class,$job->id)->result);
+    }
 }

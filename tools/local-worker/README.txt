@@ -46,6 +46,12 @@ files are preserved. Local copies can persist until the operator syncs again.
 An offline computer cannot receive a deletion immediately.
 
 Publishing is idempotent: an existing completed result cannot be overwritten.
+The reviewed JSON is transferred as raw document bytes (application/octet-stream,
+fixed result.json filename). The deployed endpoint parses the same JSON and retains
+all token, operator-review, source-hash, size and content checks. This handles a
+hosting false positive observed with legitimate CV text in application/json bodies.
+No hosting protection or account permission is changed. Older reviewed result.json
+files remain compatible and do not need to be regenerated.
 Failed email remains pending; repeat the publish command to retry. SMTP cannot
 provide a strict exactly-once guarantee if the process fails immediately after
 acceptance but before the database records delivery. Normal repeated uploads

@@ -125,6 +125,25 @@ class BatchTransferTest(unittest.TestCase):
         with self.assertRaises(w.TransferError):
             w.setup(self.root, 'https://worklook.test')
 
+    def test_http_publication_uploads_the_exact_utf8_json_document(self):
+        payload={'summary':'Досвід PHP, Symfony; doświadczenie i testy.','matches':[{'cv_text':'Jane Doe\nPHP | SQL | API'}]}
+        with patch.object(w.urllib.request,'build_opener') as opener:
+            opener.return_value.open.return_value.__enter__.return_value.read.return_value=b'{"published":true}'
+            response=w.api('https://worklook.test','fixture-token','a'*32+'/result',payload)
+            self.assertEqual(b'{"published":true}',response)
+            request=opener.return_value.open.call_args.args[0]
+            self.assertEqual('Bearer fixture-token',request.get_header('Authorization'))
+            self.assertEqual('yes',request.get_header('X-operator-reviewed'))
+            content_type=request.get_header('Content-type')
+            self.assertEqual('application/octet-stream',content_type)
+            self.assertEqual('attachment; filename="result.json"',request.get_header('Content-disposition'))
+            self.assertEqual(payload,json.loads(request.data.decode('utf-8')))
+
+    def test_oversized_result_is_rejected_before_network_access(self):
+        with patch.object(w.urllib.request,'build_opener') as opener,self.assertRaises(w.TransferError):
+            w.api('https://worklook.test','fixture-token','a'*32+'/result',{'summary':'x'*500001})
+        opener.assert_not_called()
+
 
 if __name__ == '__main__':
     unittest.main()
