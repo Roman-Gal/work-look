@@ -20,6 +20,8 @@ final class CvPdfRenderer
     public function renderPrepared(string $text, array $sourceLinks = []): string
     {
         $links=new CvLinks();$known=$links->extract($text);$missing=[];
+        // The credit already links to this destination; it is not an extra candidate profile.
+        if($this->brandUrl()!==''){$known[]=$this->brandUrl();}
         foreach($sourceLinks as $source){
             if(is_string($source) && ($url=$links->target($source))!==null && !in_array($url,$known,true)){$missing[]=$url;$known[]=$url;}
         }

@@ -91,6 +91,10 @@ Prepared PDFs restore source destinations omitted from a reviewed CV, with compa
 labels and exact underlying URLs. No profile URL is guessed from a candidate name,
 and no linked resource is fetched. Source PDFs, saved results and notification
 timestamps are unchanged when the presentation restores links.
+An introductory source-links section uses compact readable labels in the identity
+header when it is short enough. Long URL query strings remain in link destinations
+rather than filling the page. The WorkLook credit is not repeated as a candidate's
+portfolio link. Oversized link sections remain in the flowing document body.
 
 The privacy notice identifies Roman Halaiko and the provided contact mailbox.
 It describes service purposes, local operator/OpenAI processing, possible non-EEA

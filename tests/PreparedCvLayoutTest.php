@@ -37,6 +37,14 @@ final class PreparedCvLayoutTest extends TestCase
         yield 'Long introduction'=>["Jane Example\nDeveloper\n".str_repeat("An additional factual line.\n",30)."EXPERIENCE\nVerified role."];
         yield 'No short header'=>[str_repeat('A long factual paragraph. ',35)."\n\nAdditional information."];
         yield 'Empty'=>[''];
+        yield 'Source links before profile'=>["Jane Example\nDeveloper\nWarsaw\njane@example.test\n\nLINKI ZE ŹRÓDŁOWEGO CV\nGitHub: https://github.com/example\n\nPROFIL\nVerified experience."];
+    }
+    public function testSourceLinkHeadingDoesNotDisplaceCandidateContacts(): void
+    {
+        $cv=(new PreparedCvLayout())->parse("Jane Example\nDeveloper\nWarsaw\njane@example.test\n\nLINKI ZE ŹRÓDŁOWEGO CV\nGitHub: https://github.com/example\n\nPROFIL\nVerified experience.");
+        self::assertSame(['Warsaw','jane@example.test'],$cv['contacts']);
+        self::assertSame('links',$cv['rows'][0][0]['kind']);
+        self::assertSame('profile',$cv['rows'][1][0]['kind']);
     }
     public function testUntrustedResumeTextRemainsEscapedInTheTemplate(): void
     {

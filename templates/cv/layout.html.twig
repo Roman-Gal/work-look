@@ -2,22 +2,26 @@
 <html lang="{{ language|default('uk') }}">
 <head><meta charset="UTF-8"><style>
 @page { margin: 15mm 17mm 19mm; }
-body { margin: 0; font-family: "Zakon Text", serif; font-size: 10.2pt; line-height: 1.32; color: {{ brand.color('ink') }}; }
+body { margin: 0; font-family: "Zakon Text", serif; font-size: 10.2pt; line-height: 1.3; color: {{ brand.color('ink') }}; }
 a { color: {{ brand.color('green') }}; text-decoration: underline; overflow-wrap: break-word; word-wrap: break-word; }
 * { box-sizing: border-box; }
-.cv-header { background: {{ brand.color('pale') }}; border-left: 4pt solid {{ brand.color('green') }}; padding: 12pt 18pt 11pt; margin: 0 0 13pt; page-break-inside: avoid; }
+.cv-header { background: {{ brand.color('pale') }}; border-left: 4pt solid {{ brand.color('green') }}; padding: 10pt 18pt 9pt; margin: 0 0 7pt; page-break-inside: avoid; }
 h1 { font-size: 25pt; line-height: 1.16; font-weight: 700; margin: 0 0 6pt; color: {{ brand.color('ink') }}; overflow-wrap: break-word; }
 .headline { font-size: 11.2pt; margin: 0 0 6pt; color: {{ brand.color('green') }}; }
 .contacts { font-size: 8.6pt; line-height: 1.4; color: {{ brand.color('muted') }}; overflow-wrap: break-word; word-wrap: break-word; }
 .source-links { font-size: 8.3pt; line-height: 1.4; margin-top: 5pt; overflow-wrap: break-word; word-wrap: break-word; }
 .source-links a { white-space: nowrap; }
-.cv-section { margin: 0 0 10pt; }
-h2 { color: {{ brand.color('green') }}; font-size: 9pt; font-weight: 700; letter-spacing: 1.15pt; line-height: 1.4; margin: 0 0 6pt; padding: 0 0 4pt; border-bottom: .6pt solid {{ brand.color('line') }}; page-break-after: avoid; }
+.cv-section { margin: 0 0 7pt; }
+.cv-links { font-size: 8.6pt; line-height: 1.3; }
+.cv-header .cv-links { font-size: 8.3pt; margin: 6pt 0 0; }
+.cv-header .cv-links h2 { font-size: 7.5pt; letter-spacing: .4pt; color: {{ brand.color('muted') }}; border: 0; padding: 0; margin: 0 0 3pt; }
+.cv-header .cv-links p { margin: 0; }
+h2 { color: {{ brand.color('green') }}; font-size: 9pt; font-weight: 700; letter-spacing: 1.15pt; line-height: 1.4; margin: 0 0 5pt; padding: 0 0 4pt; border-bottom: .6pt solid {{ brand.color('line') }}; page-break-after: avoid; }
 p { margin: 0 0 5pt; white-space: pre-line; overflow-wrap: break-word; word-wrap: break-word; orphans: 3; widows: 3; }
 .subheading { font-weight: 700; font-size: 10.5pt; margin: 0 0 2pt; page-break-after: avoid; }
 .meta { font-size: 9pt; color: {{ brand.color('muted') }}; margin: 0 0 7pt; page-break-after: avoid; }
 ul { margin: 3pt 0 0; padding-left: 14pt; }
-li { margin: 0 0 2.5pt; padding-left: 2pt; orphans: 2; widows: 2; }
+li { margin: 0 0 2pt; padding-left: 2pt; orphans: 2; widows: 2; }
 .skills-box { background: {{ brand.color('bg') }}; border: .5pt solid {{ brand.color('line') }}; padding: 8pt 12pt; }
 .skill-line { margin: 0 0 2pt; font-size: 9.8pt; }
 .compact-row { width: 100%; border-collapse: collapse; margin: 0 0 5pt; page-break-inside: avoid; table-layout: fixed; }

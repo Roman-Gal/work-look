@@ -33,10 +33,11 @@ REGEX;
     {
         return array_values(array_unique(array_column(array_filter($this->segments($text),static fn($part)=>isset($part['url'])),'url')));
     }
-    public function render(string $text): Markup
+    public function render(string $text, bool $compact = false): Markup
     {
         $html='';
         foreach($this->segments($text) as $part){
+            if($compact && isset($part['url']) && !$part['labelled']){$html.=$this->link($part['url']);continue;}
             $label=htmlspecialchars($part['text'],ENT_QUOTES|ENT_SUBSTITUTE,'UTF-8');
             $html.=isset($part['url'])?'<a href="'.htmlspecialchars($part['url'],ENT_QUOTES|ENT_SUBSTITUTE,'UTF-8').'">'.$label.'</a>':$label;
         }
@@ -72,7 +73,7 @@ REGEX;
             }
             $url=$this->target($address);
             if($url!==null){
-                $parts[]=['text'=>$markdown?$match['label'][0]:$address,'url'=>$url];
+                $parts[]=['text'=>$markdown?$match['label'][0]:$address,'url'=>$url,'labelled'=>$markdown];
                 if(!$markdown){$parts[]=['text'=>substr($whole,strlen($address))];}
             }else{$parts[]=['text'=>$whole];}
             $offset=$position+strlen($whole);

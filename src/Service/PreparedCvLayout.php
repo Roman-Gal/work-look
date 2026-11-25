@@ -22,6 +22,8 @@ final class PreparedCvLayout
         'EDUCATION'=>'education', 'LANGUAGES'=>'languages', 'CERTIFICATES'=>'certificates',
         'CERTIFICATIONS'=>'certificates', 'COURSES'=>'certificates', 'PROJECTS'=>'projects', 'PERSONAL PROJECTS'=>'projects',
         'LINKS'=>'links', 'LINKI'=>'links', 'ПОСИЛАННЯ'=>'links',
+        'LINKI ZE ŹRÓDŁOWEGO CV'=>'links', 'LINKI Z CV'=>'links', 'SOURCE LINKS'=>'links',
+        'LINKS FROM SOURCE CV'=>'links', 'ПОСИЛАННЯ З РЕЗЮМЕ'=>'links', 'ПОСИЛАННЯ З CV'=>'links',
     ];
     private function kind(string $line): ?string
     {

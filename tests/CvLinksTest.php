@@ -45,4 +45,13 @@ final class CvLinksTest extends TestCase
         self::assertStringContainsString('&lt;img src=x&gt;',$html);
         self::assertStringContainsString('href="https://example.test/a?x=1&amp;y=2"',$html);
     }
+    public function testCompactLinkSectionsKeepExactDestinationsAndExistingLabels(): void
+    {
+        $url='https://example.test/diploma/a-very-long-identifier/verified-course?ref=cv&lang=en';
+        $links=new CvLinks();$html=(string)$links->render('Certificate: '.$url.' | [My profile](https://github.com/example)',true);
+        self::assertStringContainsString('href="'.htmlspecialchars($url,ENT_QUOTES,'UTF-8').'"',$html);
+        self::assertStringContainsString('Certificate: ',$html);
+        self::assertStringNotContainsString('>https://example.test/',$html);
+        self::assertStringContainsString('>My profile</a>',$html);
+    }
 }
