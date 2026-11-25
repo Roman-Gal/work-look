@@ -7,6 +7,8 @@
 /public/bundles/
 /var/
 /vendor/
+__pycache__/
+*.pyc
 ###< symfony/framework-bundle ###
 
 ###> symfony/asset-mapper ###

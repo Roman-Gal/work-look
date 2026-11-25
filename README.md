@@ -17,7 +17,9 @@ from your canonical profile. You stay in control of applications.
 - Email-verified accounts and Ukrainian, Polish and English interfaces.
 - One free AI search per verified account; a disabled button reserves future payments.
 - A singleton administrator, private traffic statistics and searchable activity logs.
-- Text-PDF resume intake, private drafts and a manual AI prompt/JSON review workflow.
+- Private database-backed text-PDF intake, privacy acknowledgement and saved search requests.
+- Operator-triggered local downloads, optional Codex CLI processing and reviewed result uploads.
+- Account results, owner-only PDF CVs and branded email notifications.
 - Reviewed search knowledge and private saved prompts, accessible to the search agent.
 
 There is no autonomous search schedule or automatic application submission.
@@ -205,8 +207,8 @@ php bin/console doctrine:schema:validate
 composer audit
 ~~~
 
-The latest full suite passed **68 tests and 531 assertions**; three focused language
-tests then passed with 53 assertions for the final route-context change. Tests guard the disposable
+The latest full suite passed **78 tests and 644 assertions**. The local transfer
+utility also passed six tests, including Windows credential encryption. Tests guard the disposable
 database name before rebuilding its schema and mock external API calls. Coverage
 includes ownership, CSRF, login, escaping, PDFs, immutable facts, sources/XXE,
 verification/expiry/token reuse/throttling, SMTP failures, quotas, queue rollback,
@@ -229,12 +231,13 @@ current. Docker is optional locally and is not a hosting requirement.
 | [Deployment](docs/mydevil-deployment.txt) | Verified release, workers, backups and host operations |
 | [Email registration](docs/email-registration.txt) | Confirmation flow, SMTP and safeguards |
 | [Administration](docs/administration.txt) | Owner account, traffic statistics, activity audit, GeoIP and retention |
+| [Local processing](docs/local-processing.txt) | Manual daily transfer, private PDFs, reviewed results and notifications |
 | [Resume intake and knowledge](docs/resume-and-knowledge.txt) | Text PDF import, manual AI review, shared KB and private prompts |
 | [Hosting](docs/hosting.txt) | Multiple runtimes, domains and process management |
 | [Specification](docs/specification.txt) | Original goals and later product decisions |
 | [Research](docs/research/00-README.txt) | API/RSS findings, contracts, requests and dated evidence |
 
-Verified runtime: 3f9092e (private text-PDF intake, manual profile preparation and
+Verified hosted runtime: 3f9092e (private text-PDF intake, manual profile preparation and
 reviewed search knowledge, alongside administration and activity statistics).
 Later documentation-only commits do not require a new application release.
 The latest deployment preserved all three users and the existing profile; it did
@@ -252,3 +255,6 @@ messages. It preserves the chosen login/password, verifies/enables the account a
 restores one free search. Bot databases are unaffected. Git restores code; deleted
 database contents require a separate backup. Once a separate administrator exists,
 the reset refuses to delete that administrator.
+
+The 25 November local-processing changes are prepared locally; deployment and
+end-to-end hosted transfer verification are pending temporary SSH access.

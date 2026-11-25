@@ -8,6 +8,9 @@ security:
         dev:
             pattern: ^/(assets|build)/
             security: false
+        local_worker:
+            pattern: ^/internal/local-work(?:/|$)
+            security: false
         main:
             lazy: true
             provider: app_users
@@ -23,6 +26,7 @@ security:
                 target: app_login
                 enable_csrf: true
     access_control:
+        - { path: ^/privacy/cv$, roles: PUBLIC_ACCESS, methods: [GET] }
         - { path: ^/(telegram/webhook|translator/telegram/webhook)$, roles: PUBLIC_ACCESS, methods: [POST] }
         - { path: ^/language/(uk|pl|en)$, roles: PUBLIC_ACCESS }
         - { path: ^/login$, roles: PUBLIC_ACCESS }

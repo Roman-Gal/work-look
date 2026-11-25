@@ -12,6 +12,16 @@ final class CvPdfRenderer
 
     public function render(JobMatch $match, array $facts): string
     {
+        return $this->document($this->twig->render('cv/document.html.twig', [
+            'match' => $match, 'profile' => $match->run->profileSnapshot, 'facts' => $facts,
+        ]));
+    }
+    public function renderPrepared(string $text): string
+    {
+        return $this->document($this->twig->render('cv/prepared.html.twig',['text'=>$text]));
+    }
+    private function document(string $html): string
+    {
         $fontSource = $this->projectDir.'/assets/fonts/zakon';
         $fontCache = $this->projectDir.'/var/pdf-fonts';
         if (!is_dir($fontCache) && !mkdir($fontCache, 0700, true) && !is_dir($fontCache)) {
@@ -28,9 +38,7 @@ final class CvPdfRenderer
                 throw new \RuntimeException('Could not load the bundled Zakon Text font.');
             }
         }
-        $pdf->loadHtml($this->twig->render('cv/document.html.twig', [
-            'match' => $match, 'profile' => $match->run->profileSnapshot, 'facts' => $facts,
-        ]), 'UTF-8');
+        $pdf->loadHtml($html, 'UTF-8');
         $pdf->setPaper('A4');
         $pdf->render();
         return $pdf->output();

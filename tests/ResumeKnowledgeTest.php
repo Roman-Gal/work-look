@@ -61,7 +61,7 @@ final class ResumeKnowledgeTest extends WebTestCase
     private function upload(): void
     {
         $this->client->loginUser($this->owner); $page=$this->client->request('GET','/resume');
-        $form=$page->filter('form[action="/resume/upload"]')->form(); $form['resume']->upload($this->file($this->pdf()));
+        $form=$page->filter('form[action="/resume/upload"]')->form(); $form['privacy_ack']->tick(); $form['resume']->upload($this->file($this->pdf()));
         $this->client->submit($form); self::assertResponseRedirects('/resume',303);
     }
     private function draft(): ResumeDraft { return $this->em->getRepository(ResumeDraft::class)->findOneBy(['user'=>$this->owner]); }
@@ -100,6 +100,8 @@ final class ResumeKnowledgeTest extends WebTestCase
     public function testUploadAndManualPackageAreOwnerScopedAndDoNotSpendSearch(): void
     {
         $this->upload(); $this->em->clear(); $draft=$this->draft(); self::assertStringContainsString('Jane Doe',$draft->text);
+        self::assertStringStartsWith('%PDF-',$draft->pdfBytes()); self::assertSame($draft->contentHash,hash('sha256',$draft->pdfBytes()));
+        self::assertNotNull($draft->privacyAcknowledgedAt);self::assertSame(\App\Service\LocalWork::PRIVACY_VERSION,$draft->privacyVersion);
         self::assertSame(0,$this->em->getRepository(Profile::class)->count([])); self::assertSame(0,$this->em->getRepository(AgentRun::class)->count([]));
         self::assertNull($this->em->getConnection()->fetchOne('SELECT free_search_run_id FROM app_user WHERE id = ?',[$this->owner->id]) ?: null);
         $this->client->request('GET','/resume/prompt.txt'); self::assertResponseIsSuccessful(); self::assertResponseHeaderSame('Content-Type','text/plain; charset=UTF-8');
@@ -112,7 +114,7 @@ final class ResumeKnowledgeTest extends WebTestCase
         $this->client->loginUser($this->owner); $this->client->request('POST','/resume/upload',['_token'=>'invalid']); self::assertResponseStatusCodeSame(403);
         $this->upload(); $this->em->clear(); $before=$this->draft()->contentHash;
         $page=$this->client->request('GET','/resume'); $form=$page->filter('form[action="/resume/upload"]')->form();
-        $form['resume']->upload($this->file('not a PDF')); $this->client->submit($form); self::assertResponseRedirects('/resume',303);
+        $form['privacy_ack']->tick(); $form['resume']->upload($this->file('not a PDF')); $this->client->submit($form); self::assertResponseRedirects('/resume',303);
         $this->em->clear(); self::assertSame($before,$this->draft()->contentHash);
     }
     public function testUnsupportedAiFactsAreRejectedAndProfileRequiresUserConfirmation(): void

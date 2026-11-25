@@ -1,3 +1,14 @@
+PREPARED LOCAL-PROCESSING RELEASE — 2026-11-25
+Not deployed yet: temporary SSH authorization is required.
+Adds private database PDF storage, versioned CV processing acknowledgement,
+operator-triggered local packages/KB, optional subscription Codex CLI, reviewed
+result upload, private result PDFs, email notification and shared brand colors.
+Additive migration: Version20261125140000. Preserve all existing data and bot cron.
+Local validation: 78 PHP tests / 644 assertions, six local transfer tests, real
+localhost PDF/KB/result HTTP roundtrip and UA/PL browser preview passed. Null email
+transport and synthetic CV only; no AI inference or real notification sent.
+The following is the last verified hosted runtime, not the prepared new release.
+
 CURRENT VERIFIED RESUME AND KNOWLEDGE RELEASE — 2026-11-24
 URL: https://rh-additional.usermd.net/
 Runtime: 3f9092ea9116aba78a8b898a4e2eabb609a88b4c.

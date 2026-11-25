@@ -1,0 +1,8 @@
+{% extends 'base.html.twig' %}
+{% block content %}
+<a class="back-link" href="{{ path('app_local_requests') }}">{{ 'batch.history'|trans }}</a><h1>{{ job.input.search_request }}</h1><span class="badge status-{{ job.status }}">{{ ('batch.status.' ~ job.status)|trans }}</span>
+{% if job.status != 'completed' %}<section class="panel section"><h2>{{ 'batch.wait_title'|trans }}</h2><p>{{ 'batch.wait'|trans }}</p></section>{% else %}
+<section class="panel section"><p class="description-text">{{ job.result.summary }}</p><p class="help-text">{{ 'batch.review_help'|trans }}</p></section>
+{% for match in job.result.matches %}<article class="panel section"><h2>{{ match.title }}</h2><p>{{ match.company }} · {{ match.location }}</p><p class="salary">{{ match.salary }}</p><h3>{{ 'batch.fit'|trans }}</h3><p class="description-text">{{ match.fit }}</p><h3>{{ 'batch.gaps'|trans }}</h3><p class="description-text">{{ match.gaps }}</p><p class="help-text">{{ 'batch.checked'|trans }}: {{ match.checked_at }}</p><a class="button secondary" href="{{ match.url }}" target="_blank" rel="noopener noreferrer">{{ 'batch.vacancy'|trans }}</a>{% if match.cv_text %} <a class="button primary" href="{{ path('app_local_cv',{id:job.id,index:loop.index0}) }}">{{ 'batch.cv'|trans }}</a><details><summary>{{ 'resume.review'|trans }}</summary><p class="description-text">{{ match.cv_text }}</p></details>{% endif %}</article>{% endfor %}{% endif %}
+<form action="{{ path('app_local_remove',{id:job.id}) }}" method="post" class="section" data-turbo="false"><input type="hidden" name="_token" value="{{ csrf_token('local_work_remove_' ~ job.id) }}"><button class="button secondary">{{ 'batch.remove'|trans }}</button><p class="help-text">{{ 'batch.remove_help'|trans }}</p></form>
+{% endblock %}

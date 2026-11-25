@@ -2,25 +2,32 @@
 namespace App\Controller;
 
 use App\Agent\OpenAiClient;
-use App\Entity\{AgentRun, JobMatch, Profile, ResumeDraft, User};
+use App\Entity\{AgentRun, JobMatch, LocalWorkRequest, Profile, ResumeDraft, User};
 use App\Form\{ProfileType, RunType};
 use App\Service\{SearchAllowance, SearchLauncher};
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\{Request, Response};
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Lock\LockFactory;
 use Symfony\Component\Routing\Attribute\Route;
 
 final class DashboardController extends AbstractController
 {
-    public function __construct(private EntityManagerInterface $em) {}
+    public function __construct(private EntityManagerInterface $em, #[Autowire('%env(bool:LOCAL_BATCH_ENABLED)%')] private bool $localBatch) {}
 
     #[Route('/', name: 'app_dashboard', methods: ['GET', 'POST'])]
     public function index(Request $request, OpenAiClient $ai, SearchAllowance $allowance, SearchLauncher $launcher, LockFactory $locks, LoggerInterface $logger): Response
     {
         /** @var User $user */ $user = $this->getUser();
         $profile = $this->em->getRepository(Profile::class)->findOneBy(['user' => $user]);
+        if ($this->localBatch) {
+            return $this->render('local_work/dashboard.html.twig',[
+                'draft'=>$this->em->getRepository(ResumeDraft::class)->findOneBy(['user'=>$user]),
+                'jobs'=>$this->em->getRepository(LocalWorkRequest::class)->findBy(['user'=>$user],['createdAt'=>'DESC'],20),
+            ]);
+        }
         $form = $this->createForm(RunType::class); $form->handleRequest($request);
         if ($form->isSubmitted() && $form->isValid()) {
             $lock = $locks->createLock('start_run_user_'.$user->id, 30);

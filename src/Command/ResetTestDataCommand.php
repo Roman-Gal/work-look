@@ -29,7 +29,8 @@ final class ResetTestDataCommand extends Command
                 throw new \RuntimeException('Reset would delete the singleton administrator; nothing erased.');
             }
             // Dependency order, no CASCADE outside these explicit WorkLook tables/databases.
-            foreach (['messenger_messages', 'resume_draft', 'job_match', 'profile', 'agent_run', 'job'] as $table) {
+            foreach (['messenger_messages', 'local_work_request', 'resume_draft', 'job_match', 'profile', 'agent_run', 'job'] as $table) {
+                if ($table === 'local_work_request' && !$db->createSchemaManager()->tablesExist([$table])) { continue; }
                 if ($table === 'messenger_messages' && !$db->createSchemaManager()->tablesExist([$table])) { continue; }
                 if ($table === 'resume_draft' && !$db->createSchemaManager()->tablesExist([$table])) { continue; }
                 $db->executeStatement('DELETE FROM '.$table);

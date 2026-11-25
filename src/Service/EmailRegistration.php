@@ -10,13 +10,14 @@ use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Mime\Email;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
+use Twig\Environment;
 
 final class EmailRegistration
 {
     public function __construct(
         private EntityManagerInterface $em, private MailerInterface $mailer,
         private UserPasswordHasherInterface $hasher, private TranslatorInterface $translator,
-        private LockFactory $locks, private LoggerInterface $logger,
+        private LockFactory $locks, private LoggerInterface $logger, private Environment $twig,
         #[Autowire('%env(bool:REGISTRATION_ENABLED)%')] private bool $enabled,
         #[Autowire('%env(MAILER_DSN)%')] private string $dsn,
         #[Autowire('%env(MAILER_FROM)%')] private string $from,
@@ -58,7 +59,9 @@ final class EmailRegistration
             $subject = $this->translator->trans('registration.mail_subject', [], null, $locale);
             $body = $this->translator->trans('registration.mail_body', ['%link%' => $link, '%token%' => $token], null, $locale);
             try {
-                $this->mailer->send((new Email())->from($this->from)->to($email)->subject($subject)->text($body));
+                $this->mailer->send((new Email())->from($this->from)->to($email)->subject($subject)->text($body)
+                    ->html($this->twig->render('email/result.html.twig',['subject'=>$subject,'body'=>$body,'button'=>$subject,
+                        'link'=>$link,'origin'=>rtrim($this->origin,'/'),'locale'=>$locale])));
             } catch (\Throwable) {
                 // Do not log the SMTP DSN, recipient, message or verification token.
                 $user->verificationHash = null; $user->verificationExpiresAt = null; $this->em->flush();

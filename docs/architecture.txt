@@ -1,7 +1,15 @@
 WorkLook implementation map
 Originally recorded 2026-11-20; current deployment details: mydevil-deployment.txt.
 
-Flow
+Default flow (operator-assisted batches, 2026-11-25)
+Browser /resume upload -> private PDF/text + privacy notice version in DB
+ -> /requests/new -> LocalWorkRequest snapshot (one pending request per account)
+ -> operator download -> optional Codex CLI or manual desktop-app processing
+ -> reviewed JSON upload -> owner result page + PDF rendering + email notification.
+Machine transfer uses a dedicated token hash; no website API model call or trial
+reservation occurs in this flow. See local-processing.txt for boundaries.
+
+Legacy API flow (LOCAL_BATCH_ENABLED=0)
 Browser POST / (CSRF + authenticated User)
  -> DashboardController -> SearchAllowance + SearchLauncher
  -> atomic allowance reservation, AgentRun(profile snapshot) and Doctrine Messenger dispatch

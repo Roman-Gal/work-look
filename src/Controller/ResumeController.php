@@ -3,7 +3,7 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Entity\ResumeDraft;
-use App\Service\{ManualResumePrompt, ResumeProfilePreparation, ResumeTextExtractor};
+use App\Service\{LocalWork, ManualResumePrompt, ResumeProfilePreparation, ResumeTextExtractor};
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
@@ -30,6 +30,7 @@ final class ResumeController extends AbstractController
     public function upload(Request $request, ResumeTextExtractor $extractor, LockFactory $locks): Response
     {
         if (!$this->isCsrfTokenValid('resume_upload', $request->request->getString('_token'))) { throw $this->createAccessDeniedException(); }
+        if ($request->request->getString('privacy_ack') !== '1') { $this->addFlash('warning','batch.privacy_required'); return $this->redirectToRoute('app_resume',status:303); }
         if (!$this->limiter->create((string) $this->getUser()->id)->consume()->isAccepted()) { $this->addFlash('warning', 'resume.rate_limit'); return $this->redirectToRoute('app_resume', status: 303); }
         $file = $request->files->get('resume');
         if (!$file instanceof UploadedFile) { $this->addFlash('warning', 'resume.invalid'); return $this->redirectToRoute('app_resume', status: 303); }
@@ -39,6 +40,8 @@ final class ResumeController extends AbstractController
             $data = $extractor->extract($file);
             $draft = $this->em->getRepository(ResumeDraft::class)->findOneBy(['user' => $this->getUser()]) ?? new ResumeDraft($this->getUser());
             $draft->text = $data['text']; $draft->pages = $data['pages']; $draft->preparedProfile = null;
+            $draft->pdfData = file_get_contents($file->getPathname());
+            $draft->privacyAcknowledgedAt = new \DateTimeImmutable(); $draft->privacyVersion = LocalWork::PRIVACY_VERSION;
             $draft->contentHash = hash_file('sha256', $file->getPathname());
             $draft->filename = mb_substr(preg_replace('/[\x00-\x1F\x7F]/u', '', mb_scrub(basename(str_replace('\\', '/', $file->getClientOriginalName())))) ?? 'resume.pdf', 0, 180);
             $draft->updatedAt = new \DateTimeImmutable(); $this->em->persist($draft); $this->em->flush();
@@ -58,6 +61,13 @@ final class ResumeController extends AbstractController
         if (mb_strlen($requestText) > 2000 || mb_strlen($preferences) > 3000) { throw $this->createAccessDeniedException(); }
         $draft->requestText = $requestText; $draft->preferences = $preferences; $draft->updatedAt = new \DateTimeImmutable(); $this->em->flush();
         $this->addFlash('success', 'flash.saved'); return $this->redirectToRoute('app_resume', status: 303);
+    }
+    #[Route('/resume/original.pdf', name:'app_resume_original', methods:['GET'])]
+    public function original(): Response
+    {
+        $bytes=$this->draft()->pdfBytes();
+        if (!$bytes) { throw $this->createNotFoundException(); }
+        return new Response($bytes,200,['Content-Type'=>'application/pdf','Content-Disposition'=>'attachment; filename="resume.pdf"']);
     }
     #[Route('/resume/prompt.txt', name: 'app_resume_prompt', methods: ['GET'])]
     public function prompt(Request $request, ManualResumePrompt $prompt): Response

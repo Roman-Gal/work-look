@@ -1,0 +1,1 @@
+{% extends 'base.html.twig' %}{% block content %}<section class="panel">{% include 'privacy/_cv_notice.html.twig' %}</section>{% endblock %}{% block guest %}<main><section class="panel">{% include 'privacy/_cv_notice.html.twig' %}<a href="{{ path('app_login') }}">{{ 'nav.account'|trans }}</a></section></main>{% endblock %}

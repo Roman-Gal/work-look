@@ -1,0 +1,71 @@
+WorkLook operator-assisted processing — 2026-11-25
+
+The initial MVP uses a manual daily operator workflow. MyDevil stores source PDFs
+as private PostgreSQL BYTEA values, alongside extracted text and versioned privacy
+acknowledgement. Existing text-only drafts remain intact and must be reuploaded
+before creating a batch. Upload constraints remain 5 MB/20 pages; no OCR or model
+call occurs during upload. The owner can download or remove the draft.
+
+POST /requests/new snapshots the current draft's PDF, text, filename/hash, request,
+preferences, acknowledgement and locale in local_work_request. A unique nullable
+active_user_key permits one pending request per account, including concurrent
+submissions. No AgentRun, queue message or free-API-search reservation is created.
+Account search disabling is respected. Normal user routes enforce ownership/CSRF.
+Results and PDF downloads are login-protected. Deleting a request deletes its
+source snapshot and result, leaving the main draft and confirmed profile intact.
+
+Machine transfer endpoints /internal/local-work/* use a separate stateless path
+and require a 256-bit bearer token on EVERY action, regardless of login cookies.
+Only its SHA256 hash is configured on the server. Missing/invalid config fails
+closed. Responses are private/no-store and do not expose an owner email in exports.
+Manifest inventories IDs/statuses. Packages include owner-private prompts plus
+published reviewed shared KB; the shared KB endpoint excludes all private prompts.
+The Windows transfer credential is protected by the current user's DPAPI identity.
+
+tools/local-worker/README.txt describes setup and the three click-to-run launchers.
+The local script exchanges data; Codex receives isolated per-request folders and
+must not read connection credentials or mix candidate facts. The desktop app
+manual path uses RUN_TODAY.md. Optional CLI execution is serial, uses ChatGPT auth,
+live web search, explicit workspace-write sandbox, JSON output schema and private
+logs. Installation/tests make no model call. No scheduler was created.
+
+The operator reviews result.json before upload. The server requires an explicit
+review header, the exact request/source hash, up to 10 distinct HTTPS vacancies,
+recent verification dates, bounded plain-text CVs and verbatim supporting excerpts.
+Source containment is evidence provenance, not automatic proof that a rewritten
+claim is true: human review remains mandatory. Fewer matches/empty results are valid
+when described honestly. HTML is escaped; result PDFs disable remote resources,
+PHP and JavaScript. Uploaded data cannot select an account or email recipient.
+
+Completion is recorded before email. The recipient is the verified owner's stored
+email and the link uses trusted DEFAULT_URI, never an incoming Host header. A
+per-request lock and sent timestamp deduplicate normal retries. Failed mail can
+be retried by publishing the same reviewed result again; SMTP has an acceptance/
+database-commit crash window. Never promise mathematically exactly-once delivery.
+
+LOCAL_BATCH_ENABLED=1 selects the new account dashboard (default). The previous
+API-based search path is retained behind LOCAL_BATCH_ENABLED=0. Advanced manual
+profile extraction remains available in a collapsed section. UA/PL/EN interfaces
+state an approximate 24-hour turnaround with possible queue delays and email
+notification. This is a target, not a guarantee of operator/computer availability.
+
+assets/styles/brand.css is the shared palette. Web CSS references its variables;
+BrandPalette reads it for PDF/email templates. Registration and result emails
+use the same colors, inline styling and Zakon webfont declaration. Mail clients
+that reject downloaded fonts fall back to Georgia/serif; identical typography
+cannot be guaranteed in every email client.
+
+The privacy notice identifies Roman Halaiko and the provided contact mailbox.
+It describes service purposes, local operator/OpenAI processing, possible non-EEA
+processing, deletion and user rights. The required unticked checkbox acknowledges
+the notice, with timestamp/version recorded. It is not marketing consent. Source:
+https://www.edpb.europa.eu/system/files/documents/files/file1/edpb_guidelines-art_6-1-b-adopted_after_public_consultation_en.pdf
+https://commission.europa.eu/law/law-topic/data-protection/information-business-and-organisations/obligations_en
+Controller/provider arrangements and backup retention still need operational
+verification before representing the service as fully GDPR-compliant. Local
+request deletion propagates at the next sync, not while the operator is offline.
+
+Additive migration Version20261125140000 preserves old users, profiles and drafts.
+Migration SQL and schema comparison were checked for SQLite and PostgreSQL types;
+the native PostgreSQL application remains part of deployment verification.
+No Telegram code, data, cron or webhook behavior is modified.

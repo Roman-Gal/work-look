@@ -11,7 +11,7 @@ final class AdminMigrationTest extends TestCase
     public function testMigrationPreservesExistingAccountsAndBuildsPortablePostgresSql(): void
     {
         $db = DriverManager::getConnection(['driver' => 'pdo_sqlite', 'memory' => true]);
-        foreach (['Version20261120153213', 'Version20261120230000', 'Version20261120235900', 'Version20261124160000', 'Version20261124180000'] as $name) {
+        foreach (['Version20261120153213', 'Version20261120230000', 'Version20261120235900', 'Version20261124160000', 'Version20261124180000', 'Version20261125140000'] as $name) {
             require_once dirname(__DIR__).'/migrations/'.$name.'.php';
         }
         foreach (['Version20261120153213', 'Version20261120230000', 'Version20261120235900'] as $name) {
@@ -44,13 +44,22 @@ final class AdminMigrationTest extends TestCase
         foreach ($resumeMigration->getSql() as $query) { $db->executeStatement($query->getStatement(), $query->getParameters(), $query->getTypes()); }
         self::assertSame(0, (int) $db->fetchOne('SELECT COUNT(*) FROM resume_draft')); self::assertSame(0, (int) $db->fetchOne('SELECT COUNT(*) FROM knowledge_entry'));
         self::assertSame('preserved-password-hash', $db->fetchOne('SELECT password FROM app_user'));
+        $db->insert('resume_draft',['user_id'=>1,'filename'=>'existing.pdf','content_hash'=>str_repeat('a',64),'text'=>'Existing private source',
+            'request_text'=>'PHP','preferences'=>'Remote','pages'=>1,'updated_at'=>'2026-11-24 18:00:00']);
+        $batchPg=new \DoctrineMigrations\Version20261125140000($postgres,new NullLogger());$batchPg->up($db->createSchemaManager()->introspectSchema());
+        $batchSql=implode("\n",array_map(static fn($query)=>$query->getStatement(),$batchPg->getSql()));
+        self::assertStringContainsString('BYTEA',$batchSql);self::assertStringContainsString('CREATE TABLE local_work_request',$batchSql);
+        self::assertStringNotContainsString('DROP TABLE',$batchSql);self::assertStringNotContainsString('DELETE FROM',$batchSql);
+        $batch=new \DoctrineMigrations\Version20261125140000($db,new NullLogger());$batch->up($db->createSchemaManager()->introspectSchema());
+        foreach($batch->getSql() as $query){$db->executeStatement($query->getStatement(),$query->getParameters(),$query->getTypes());}
+        self::assertSame('Existing private source',$db->fetchOne('SELECT text FROM resume_draft'));self::assertNull($db->fetchOne('SELECT pdf_data FROM resume_draft'));
         $config = \Doctrine\ORM\ORMSetup::createAttributeMetadataConfiguration([dirname(__DIR__).'/src/Entity'], true);
         $config->setNamingStrategy(new \Doctrine\ORM\Mapping\UnderscoreNamingStrategy(CASE_LOWER));
         $em = new \Doctrine\ORM\EntityManager($db, $config);
         $em->getConfiguration()->setUseSchemaEditorApi(true);
         $expected = (new \Doctrine\ORM\Tools\SchemaTool($em))->getSchemaFromMetadata($em->getMetadataFactory()->getAllMetadata());
         $manager = $db->createSchemaManager(); $comparator = $manager->createComparator();
-        foreach (['resume_draft', 'knowledge_entry'] as $table) {
+        foreach (['resume_draft', 'knowledge_entry', 'local_work_request'] as $table) {
             $diff = $comparator->compareTables($manager->introspectTable($table), $expected->getTable($table));
             self::assertTrue($diff->isEmpty(), implode("\n", $db->getDatabasePlatform()->getAlterTableSQL($diff)));
         }

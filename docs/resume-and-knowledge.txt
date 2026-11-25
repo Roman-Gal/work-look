@@ -1,5 +1,5 @@
 Text PDF intake, manual AI review and search knowledge
-2026-11-24
+Updated 2026-11-25
 
 Resume intake
 /resume accepts text-based PDFs. OCR is deliberately absent. A PDF without usable
@@ -25,8 +25,10 @@ or execution-limit error can end the current upload request; the old draft is ke
 
 One resume_draft row per account retains text, source filename/hash, page count,
 the user's search request/preferences and optional prepared profile data. Upload
-temporary files are handled by PHP and are not copied to persistent storage.
-The original PDF is not retained. A successful upload replaces that owner's old
+temporary files are handled by PHP. After successful extraction, the source PDF
+is stored privately in the database with a versioned privacy acknowledgement.
+The operator workflow snapshots it only after the user submits a search request.
+See docs/local-processing.txt for transfer, review, notification and deletion. A successful upload replaces that owner's old
 draft; a failed parse preserves it. Replacing a draft invalidates its prepared
 profile and previous draft-specific CSRF tokens. Removing the draft leaves the
 confirmed profile and run history intact. Existing private backups have their own
