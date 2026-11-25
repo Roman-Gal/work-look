@@ -67,5 +67,7 @@ request deletion propagates at the next sync, not while the operator is offline.
 
 Additive migration Version20261125140000 preserves old users, profiles and drafts.
 Migration SQL and schema comparison were checked for SQLite and PostgreSQL types;
-the native PostgreSQL application remains part of deployment verification.
+native PostgreSQL PDF/request roundtrips passed after deployment, and the
+synthetic transaction was rolled back. Real HTTPS local sync downloaded five
+reviewed KB entries. Hosted runtime is dc8d486; the transfer tool is connected.
 No Telegram code, data, cron or webhook behavior is modified.

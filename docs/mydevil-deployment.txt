@@ -1,15 +1,52 @@
-PREPARED LOCAL-PROCESSING RELEASE — 2026-11-25
-Not deployed yet: temporary SSH authorization is required.
-Adds private database PDF storage, versioned CV processing acknowledgement,
-operator-triggered local packages/KB, optional subscription Codex CLI, reviewed
-result upload, private result PDFs, email notification and shared brand colors.
-Additive migration: Version20261125140000. Preserve all existing data and bot cron.
-Local validation: 78 PHP tests / 644 assertions, six local transfer tests, real
-localhost PDF/KB/result HTTP roundtrip and UA/PL browser preview passed. Null email
-transport and synthetic CV only; no AI inference or real notification sent.
-The following is the last verified hosted runtime, not the prepared new release.
+CURRENT VERIFIED LOCAL-PROCESSING RELEASE — 2026-11-25
+URL: https://rh-additional.usermd.net/
+Runtime: dc8d4863719abee660d6cbe9bc11ac997d8ec321.
+Previous runtime: 3f9092ea9116aba78a8b898a4e2eabb609a88b4c.
 
-CURRENT VERIFIED RESUME AND KNOWLEDGE RELEASE — 2026-11-24
+Deployed and checked:
+ - Migration Version20261125140000: private PostgreSQL PDF storage and batch requests.
+ - Existing three users, one confirmed profile and one text-only draft preserved.
+ - Old drafts need one reupload because the old release did not retain source PDFs.
+ - Default operator-assisted dashboard, privacy acknowledgement and UA/PL/EN pages.
+ - Request snapshots, owner-only results/PDFs and reviewed result upload endpoint.
+ - Shared brand palette for website, PDFs and registration/result HTML emails.
+ - Native PostgreSQL draft/request binary roundtrip passed in a synthetic transaction.
+ - Synthetic transaction rolled back; no test user/request remained in the database.
+ - Native prepared PDF rendering passed with bundled Zakon fonts.
+ - Dedicated worker-token hash configured; unauthenticated transfer rejected.
+ - Actual HTTPS local sync passed; five reviewed shared KB entries downloaded.
+ - Zero pending local work requests at the verification time. No real CV package
+   was processed, no model inference or email notification was sent by checks.
+ - Existing administrator/demo login, admin screens, ordinary-user denial,
+   private no-store, CSP and CSS assets passed production checks.
+ - Exactly one current-release legacy WorkLook queue worker; prior wrapper absent.
+ - Original cron preserved; Telegram code/databases/webhooks unchanged.
+ - OpenAI API key remains absent and existing DB password unchanged.
+ - No public deployment helpers remained in current or previous release.
+ - Temporary SSH key revoked, fresh key-only login rejected, local key pair removed.
+
+Backup: worklook-20261125T132312Z.dump (custom-format archive list checked).
+Local suite: 78 PHP tests / 644 assertions; six Python transfer tests.
+Native email delivery remains untested for this release; null transport verified
+message construction/recipient/link and retry behavior in isolated tests. Existing
+SMTP configuration was preserved. Webfont support depends on the email client.
+
+Local operator workspace: JOBFIND/WorkLook-Local.
+01-Download.cmd downloads packages and shared KB, without an AI call.
+02-Download-and-Codex.cmd additionally runs subscription-authenticated Codex CLI.
+03-Publish-reviewed.cmd asks the operator to review, publishes results and notifies.
+Manual desktop-app work uses RUN_TODAY.md. No timer/scheduled automation exists.
+
+Private evidence: var/deploy/local-work-validation-result.json,
+local-work-result.json, local-work-native-result.json, local-work-web-result.json,
+local-work-final-result.json and local-work-key-cleanup-result.json.
+Host reports reside under apps/deploy-logs/. The scoped transfer credential is
+retained for normal operation; it is separate from the revoked SSH key.
+Later documentation-only commits do not require another runtime deployment.
+
+The following snapshots describe earlier releases, not the current data inventory.
+
+PREVIOUS VERIFIED RESUME AND KNOWLEDGE RELEASE — 2026-11-24
 URL: https://rh-additional.usermd.net/
 Runtime: 3f9092ea9116aba78a8b898a4e2eabb609a88b4c.
 Previous feature baseline: 8b7295c8e00447f4392538ecd2b6a26539bf7c5d.

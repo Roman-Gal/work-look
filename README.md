@@ -2,10 +2,11 @@
 
 **AI-assisted job search for Poland and Ukraine, with relevance scoring and fact-grounded PDF CVs.**
 
-WorkLook brings your experience, job preferences and relevant vacancies into one
-private workspace. Start a search, let a bounded AI agent explore supported feeds,
-then review its matches, explanations and prepared CVs. Every CV statement comes
-from your canonical profile. You stay in control of applications.
+WorkLook brings your CV, job preferences and relevant vacancies into one private
+workspace. The default MVP queues requests for operator-triggered local processing
+with Codex, then publishes reviewed matches and tailored PDF CVs to the account.
+An API-based bounded agent remains available as an alternative configuration.
+Candidate facts must remain supported by the source CV. Users control applications.
 
 ## Features
 
@@ -237,12 +238,12 @@ current. Docker is optional locally and is not a hosting requirement.
 | [Specification](docs/specification.txt) | Original goals and later product decisions |
 | [Research](docs/research/00-README.txt) | API/RSS findings, contracts, requests and dated evidence |
 
-Verified hosted runtime: 3f9092e (private text-PDF intake, manual profile preparation and
-reviewed search knowledge, alongside administration and activity statistics).
-Later documentation-only commits do not require a new application release.
-The latest deployment preserved all three users and the existing profile; it did
-not reset data, make an AI request or consume a free search. Telegram bots and
-their databases were preserved.
+Verified hosted runtime: dc8d486 (private database PDFs, operator-assisted batches,
+reviewed results, notifications and shared branding). The latest deployment
+preserved all three users, the existing profile and the text-only resume draft.
+One reupload is required for older drafts to retain the source PDF and acknowledge
+the new processing notice. Production checks made no model call or real email
+request. Telegram bots and their databases were preserved.
 
 An explicit test reset is available after stopping the WorkLook worker:
 
@@ -255,6 +256,3 @@ messages. It preserves the chosen login/password, verifies/enables the account a
 restores one free search. Bot databases are unaffected. Git restores code; deleted
 database contents require a separate backup. Once a separate administrator exists,
 the reset refuses to delete that administrator.
-
-The 25 November local-processing changes are prepared locally; deployment and
-end-to-end hosted transfer verification are pending temporary SSH access.
