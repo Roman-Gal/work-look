@@ -1,0 +1,12 @@
+<section class="cv-section">
+{% if section.heading %}<h2>{{ section.heading }}</h2>{% endif %}
+{% if section.kind == 'skills' %}<div class="skills-box">{% endif %}
+{% for block in section.blocks %}
+    {% if block.type == 'list' %}<ul>{% for item in block.items %}<li>{{ item }}</li>{% endfor %}</ul>
+    {% elseif block.type == 'subheading' %}<p class="subheading">{{ block.text }}</p>
+    {% elseif block.type == 'meta' %}<p class="meta">{{ block.text }}</p>
+    {% elseif block.type == 'skill' %}<p class="skill-line">{{ block.text }}</p>
+    {% else %}<p>{{ block.text }}</p>{% endif %}
+{% endfor %}
+{% if section.kind == 'skills' %}</div>{% endif %}
+</section>

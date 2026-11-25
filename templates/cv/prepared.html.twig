@@ -1,1 +1,12 @@
-<!doctype html><html><head><meta charset="UTF-8"><style>@page{margin:18mm}body{font-family:'Zakon Text',serif;font-size:10pt;line-height:1.5;color:{{ brand.color('ink') }}}p{white-space:pre-wrap;overflow-wrap:break-word}h1{font-size:15pt;color:{{ brand.color('green') }};margin:0 0 12pt}</style></head><body><p>{{ text }}</p></body></html>
+{% extends 'cv/layout.html.twig' %}
+{% block cv_content %}
+{% if cv.name or cv.headline or cv.contacts %}<header class="cv-header">
+{% if cv.name %}<h1>{{ cv.name }}</h1>{% endif %}
+{% if cv.headline %}<p class="headline">{{ cv.headline }}</p>{% endif %}
+{% if cv.contacts %}<div class="contacts">{% for contact in cv.contacts %}{{ contact }}{% if not loop.last %}<br>{% endif %}{% endfor %}</div>{% endif %}
+</header>{% endif %}
+{% for row in cv.rows %}
+{% if row|length == 2 %}<table class="compact-row"><tr>{% for section in row %}<td>{% include 'cv/_section.html.twig' %}</td>{% endfor %}</tr></table>
+{% else %}{% for section in row %}{% include 'cv/_section.html.twig' %}{% endfor %}{% endif %}
+{% endfor %}
+{% endblock %}

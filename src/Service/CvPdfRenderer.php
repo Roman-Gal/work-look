@@ -8,17 +8,27 @@ use Twig\Environment;
 
 final class CvPdfRenderer
 {
-    public function __construct(private Environment $twig, #[Autowire('%kernel.project_dir%')] private string $projectDir) {}
+    public function __construct(private Environment $twig, #[Autowire('%kernel.project_dir%')] private string $projectDir,
+        #[Autowire('%env(DEFAULT_URI)%')] private string $origin = '') {}
 
     public function render(JobMatch $match, array $facts): string
     {
         return $this->document($this->twig->render('cv/document.html.twig', [
-            'match' => $match, 'profile' => $match->run->profileSnapshot, 'facts' => $facts,
+            'match' => $match, 'profile' => $match->run->profileSnapshot, 'facts' => $facts, 'cvBrandUrl'=>$this->brandUrl(),
         ]));
     }
     public function renderPrepared(string $text): string
     {
-        return $this->document($this->twig->render('cv/prepared.html.twig',['text'=>$text]));
+        return $this->document($this->twig->render('cv/prepared.html.twig',[
+            'cv'=>(new PreparedCvLayout())->parse($text),'cvBrandUrl'=>$this->brandUrl(),
+        ]));
+    }
+    private function brandUrl(): string
+    {
+        $parts=parse_url($this->origin);
+        if(!filter_var($this->origin,FILTER_VALIDATE_URL) || ($parts['scheme']??'')!=='https' || empty($parts['host'])
+            || isset($parts['user']) || isset($parts['pass']) || isset($parts['query']) || isset($parts['fragment']) || !in_array($parts['path']??'',['','/'],true)){return '';}
+        return rtrim($this->origin,'/').'/';
     }
     private function document(string $html): string
     {

@@ -70,6 +70,17 @@ use the same colors, inline styling and Zakon webfont declaration. Mail clients
 that reject downloaded fonts fall back to Georgia/serif; identical typography
 cannot be guaranteed in every email client.
 
+Prepared CVs use a shared A4 template with embedded Zakon Text, a pale green
+identity header, green section rules, a skills panel and compact education/language
+sections. Known Polish, Ukrainian and English headings are classified for layout;
+unrecognized content stays in the flowing body. Candidate text is escaped and
+preserved rather than expanded with invented experience. Both prepared and
+canonical-fact PDFs use this design and the shared brand palette. Every page has
+a small, light credit linked to the trusted HTTPS DEFAULT_URI origin. Re-downloading
+an existing result picks up the current template without republishing or email.
+All three existing short CVs fit one page; a six-page Ukrainian fixture retained
+its text, embedded fonts and linked footer on every page with no overlap.
+
 The privacy notice identifies Roman Halaiko and the provided contact mailbox.
 It describes service purposes, local operator/OpenAI processing, possible non-EEA
 processing, deletion and user rights. The required unticked checkbox acknowledges
