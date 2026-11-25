@@ -239,12 +239,15 @@ current. Docker is optional locally and is not a hosting requirement.
 | [Specification](docs/specification.txt) | Original goals and later product decisions |
 | [Research](docs/research/00-README.txt) | API/RSS findings, contracts, requests and dated evidence |
 
-Verified hosted runtime: dc8d486 (private database PDFs, operator-assisted batches,
-reviewed results, notifications and shared branding). The latest deployment
-preserved all three users, the existing profile and the text-only resume draft.
-One reupload is required for older drafts to retain the source PDF and acknowledge
-the new processing notice. Production checks made no model call or real email
-request. Telegram bots and their databases were preserved.
+Verified hosted runtime: 251e6ef (operator-assisted batches and branded PDF CVs
+with preserved clickable links). The latest deployment preserved users, profiles,
+drafts, requests, stored results and notification timestamps. The customer's HTTPS
+download was verified as one page with embedded Zakon Text, eight destinations and
+the subtle Powered by WorkLook footer. No model call, email, schema migration,
+configuration or cron change was needed. Temporary SSH access was revoked and
+fresh key-only login denied. Telegram bots and their databases were preserved.
+Older text-only drafts still require a reupload to retain the original PDF and
+acknowledge the current processing notice.
 
 An explicit test reset is available after stopping the WorkLook worker:
 

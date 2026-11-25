@@ -110,5 +110,17 @@ Additive migration Version20261125140000 preserves old users, profiles and draft
 Migration SQL and schema comparison were checked for SQLite and PostgreSQL types;
 native PostgreSQL PDF/request roundtrips passed after deployment, and the
 synthetic transaction was rolled back. Real HTTPS local sync downloaded five
-reviewed KB entries. Hosted runtime is dc8d486; the transfer tool is connected.
+reviewed KB entries. The initial batch runtime was dc8d486; the transfer tool is connected.
 No Telegram code, data, cron or webhook behavior is modified.
+
+Branded PDF deployment verified on 2026-11-25: hosted runtime 251e6ef. Native PHP
+container/template/schema checks and font/link smoke generation passed before
+activation. The exact customer-provided result was downloaded through the normal
+authenticated HTTPS PDF route after activation: one page, embedded Zakon Text,
+eight clickable destinations and Powered by WorkLook. Candidate prose and exact
+link targets were retained; the rendered page was visually inspected. Existing
+stored results and email timestamps, core counts, configuration and cron hashes
+were unchanged. No schema migration, model call or email was performed. Temporary
+probe exports were removed. The deployment key was revoked, fresh SSH login was
+denied and the local key pair removed. Private evidence is under var/deploy/ and
+the hosting account's apps/deploy-logs/, outside the web root.
