@@ -142,4 +142,3 @@ final class LocalWorkTest extends WebTestCase
         $this->client->request('GET','/requests?page=2');self::assertResponseIsSuccessful();self::assertSelectorCount(1,'.run-row');
     }
 }
-
