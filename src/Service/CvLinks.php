@@ -7,6 +7,7 @@ use Twig\Markup;
 /** Convert candidate-provided addresses to escaped PDF links without fetching them. */
 final class CvLinks
 {
+    public function __construct(private array $descriptions = [],private string $language = 'en') {}
     // Common bare domains are recognized; framework names such as Node.js stay plain text.
     private const PATTERN = <<<'REGEX'
 ~\[(?<label>[^\]\r\n]{1,200})\]\((?<target>(?:[^()\s]|\([^()\s]*\))+)\)
@@ -37,13 +38,14 @@ REGEX;
     {
         $html='';
         foreach($this->segments($text) as $part){
+            if($this->descriptions!==[] && isset($part['url'])){$html.=$this->link($part['url'],$part['labelled']?$part['text']:null);continue;}
             if($compact && isset($part['url']) && !$part['labelled']){$html.=$this->link($part['url']);continue;}
             $label=htmlspecialchars($part['text'],ENT_QUOTES|ENT_SUBSTITUTE,'UTF-8');
             $html.=isset($part['url'])?'<a href="'.htmlspecialchars($part['url'],ENT_QUOTES|ENT_SUBSTITUTE,'UTF-8').'">'.$label.'</a>':$label;
         }
         return new Markup($html,'UTF-8');
     }
-    public function link(string $destination): Markup
+    public function link(string $destination,?string $labelOverride = null): Markup
     {
         $url=$this->target($destination);
         if($url===null){return new Markup(htmlspecialchars($destination,ENT_QUOTES|ENT_SUBSTITUTE,'UTF-8'),'UTF-8');}
@@ -53,7 +55,8 @@ REGEX;
             if(mb_strlen($label)>60){$label=$parts['host'].' / '.basename($path);}
             if(mb_strlen($label)>90){$label=$parts['host'];}
         }
-        $label=mb_strimwidth($label,0,60,'…','UTF-8');
+        if($this->descriptions!==[]){$label=(new CvLinkDescriptions())->describe($url,$this->descriptions,$this->language,$labelOverride);}
+        $label=mb_strimwidth($label,0,75,'…','UTF-8');
         return new Markup('<a href="'.htmlspecialchars($url,ENT_QUOTES|ENT_SUBSTITUTE,'UTF-8').'">'.htmlspecialchars($label,ENT_QUOTES|ENT_SUBSTITUTE,'UTF-8').'</a>','UTF-8');
     }
     private function segments(string $text): array

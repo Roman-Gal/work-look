@@ -3,7 +3,7 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Entity\{LocalWorkRequest, ResumeDraft};
-use App\Service\{CvPdfRenderer, LocalWork};
+use App\Service\{CvPdfRenderer, LocalSearchSettings, LocalWork};
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\{Request, Response};
@@ -30,7 +30,9 @@ final class LocalWorkController extends AbstractController
         if (!$lock->acquire()) { return $this->redirectToRoute('app_local_requests'); }
         try {
             if (!$draft) { throw new \InvalidArgumentException('batch.setup'); }
-            $job=$work->start($draft,$request->getLocale());
+            $options=['selected_sources'=>$request->request->all('sources'),'requested_language'=>$request->request->getString('result_language','auto'),
+                'adaptation_mode'=>$request->request->getString('adaptation_mode','enhanced')];
+            $job=$work->start($draft,$request->getLocale(),$options);
             return $this->redirectToRoute('app_local_result',['id'=>$job->id],303);
         } catch (\InvalidArgumentException $error) {
             $this->addFlash('warning',$error->getMessage()); return $this->redirectToRoute('app_resume',status:303);
@@ -41,13 +43,17 @@ final class LocalWorkController extends AbstractController
         return $this->em->getRepository(LocalWorkRequest::class)->findOneBy(['id'=>$id,'user'=>$this->getUser()]) ?? throw $this->createNotFoundException();
     }
     #[Route('/requests/{id}', name:'app_local_result', requirements:['id'=>'[a-f0-9]{32}'], methods:['GET'])]
-    public function result(string $id): Response { return $this->render('local_work/result.html.twig',['job'=>$this->owned($id)]); }
+    public function result(string $id,LocalWork $work): Response
+    {
+        $job=$this->owned($id);
+        return $this->render('local_work/result.html.twig',['job'=>$job,'resultLocale'=>$work->resultLanguage($job),'sourceCatalog'=>LocalSearchSettings::SOURCES]);
+    }
     #[Route('/requests/{id}/cv/{index}.pdf', name:'app_local_cv', requirements:['id'=>'[a-f0-9]{32}','index'=>'[0-9]'], methods:['GET'])]
     public function cv(string $id, int $index, CvPdfRenderer $pdf, LocalWork $work): Response
     {
         $job=$this->owned($id); $match=$job->result['matches'][$index]??null;
         if ($job->status!=='completed' || !$match || $match['cv_text']==='') { throw $this->createNotFoundException(); }
-        return new Response($pdf->renderPrepared($match['cv_text'],$work->sourceLinks($job)),200,['Content-Type'=>'application/pdf','Content-Disposition'=>'attachment; filename="worklook-cv-'.($index+1).'.pdf"']);
+        return new Response($pdf->renderPrepared($match['cv_text'],$work->sourceLinks($job),$work->resultLanguage($job),$job->result['candidate_links']??[]),200,['Content-Type'=>'application/pdf','Content-Disposition'=>'attachment; filename="worklook-cv-'.($index+1).'.pdf"']);
     }
     #[Route('/requests/{id}/remove', name:'app_local_remove', requirements:['id'=>'[a-f0-9]{32}'], methods:['POST'])]
     public function remove(string $id, Request $request, LockFactory $locks): Response

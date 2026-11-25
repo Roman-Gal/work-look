@@ -6,7 +6,9 @@ WorkLook brings your CV, job preferences and relevant vacancies into one private
 workspace. The default MVP queues requests for operator-triggered local processing
 with Codex, then publishes reviewed matches and tailored PDF CVs to the account.
 An API-based bounded agent remains available as an alternative configuration.
-Candidate facts must remain supported by the source CV. Users control applications.
+Confirmed facts remain grounded in the source CV. An optional enhanced local mode
+adds cautious adjacent-skill inferences with an explicit customer-facing change
+report and confirmation warning. Users review claims and control applications.
 
 ## Features
 
@@ -20,6 +22,9 @@ Candidate facts must remain supported by the source CV. Users control applicatio
 - A singleton administrator, private traffic statistics and searchable activity logs.
 - Private database-backed text-PDF intake, privacy acknowledgement and saved search requests.
 - Operator-triggered local downloads, optional Codex CLI processing and reviewed result uploads.
+- Three resumable local stages: CV/link analysis, selected-site vacancy research and detailed CV adaptation.
+- Eight selectable job sites, per-site coverage reports and an output language separate from the interface language.
+- Strict/enhanced adaptation settings with a conclusion and disclosed inferences above each vacancy.
 - Account results, owner-only PDF CVs and branded email notifications.
 - Branded CV layouts with embedded Zakon Text, shared colors, preserved clickable candidate links and a subtle "Powered by WorkLook" footer.
 - Reviewed search knowledge and private saved prompts, accessible to the search agent.
@@ -209,8 +214,8 @@ php bin/console doctrine:schema:validate
 composer audit
 ~~~
 
-The latest full suite passed **120 tests and 769 assertions**. The local transfer
-utility also passed eight tests, including Windows credential encryption. Tests guard the disposable
+The latest full suite passed **139 tests and 820 assertions**. The local transfer
+utility and staged pipeline also passed thirteen tests, including Windows credential encryption. Tests guard the disposable
 database name before rebuilding its schema and mock external API calls. Coverage
 includes ownership, CSRF, login, escaping, PDFs, immutable facts, sources/XXE,
 verification/expiry/token reuse/throttling, SMTP failures, quotas, queue rollback,

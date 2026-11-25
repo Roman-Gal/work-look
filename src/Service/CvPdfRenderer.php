@@ -17,16 +17,17 @@ final class CvPdfRenderer
             'match' => $match, 'profile' => $match->run->profileSnapshot, 'facts' => $facts, 'cvBrandUrl'=>$this->brandUrl(), 'cvLinks'=>new CvLinks(),
         ]));
     }
-    public function renderPrepared(string $text, array $sourceLinks = []): string
+    public function renderPrepared(string $text, array $sourceLinks = [], string $language = 'uk', array $classifiedLinks = []): string
     {
-        $links=new CvLinks();$known=$links->extract($text);$missing=[];
+        $language=in_array($language,['pl','uk','en'],true)?$language:'en';
+        $links=new CvLinks($classifiedLinks,$language);$known=$links->extract($text);$missing=[];
         // The credit already links to this destination; it is not an extra candidate profile.
         if($this->brandUrl()!==''){$known[]=$this->brandUrl();}
         foreach($sourceLinks as $source){
             if(is_string($source) && ($url=$links->target($source))!==null && !in_array($url,$known,true)){$missing[]=$url;$known[]=$url;}
         }
         return $this->document($this->twig->render('cv/prepared.html.twig',[
-            'cv'=>(new PreparedCvLayout())->parse($text),'cvBrandUrl'=>$this->brandUrl(),'cvLinks'=>$links,'sourceLinks'=>$missing,
+            'cv'=>(new PreparedCvLayout())->parse($text),'cvBrandUrl'=>$this->brandUrl(),'cvLinks'=>$links,'sourceLinks'=>$missing,'language'=>$language,
         ]));
     }
     private function brandUrl(): string

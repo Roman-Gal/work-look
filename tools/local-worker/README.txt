@@ -23,17 +23,30 @@ Daily workflow:
 
 For the manual desktop-app route, click 01-Download.cmd, open WorkLook-Local as
 the workspace in the Codex app and ask it to follow RUN_TODAY.md. Each job's
-TASK.md, package.json and resume.pdf are the relevant inputs. Result files must be
+TASK.md and package.json are the relevant inputs; source PDF photos/images are ignored. Result files must be
 jobs/<id>/result.json matching result.schema.json. Review candidate facts, job
 status, links, gaps and CV wording, then use 03-Publish-reviewed.cmd.
 Do not confuse the Windows launchers with commands to paste into the chat.
 
-The CLI button enforces forced_login_method=chatgpt, removes API key environment
-variables and requests live web search. It needs an installed, signed-in Codex CLI
+The CLI button enforces forced_login_method=chatgpt and removes API key environment
+variables. New packages run three serial Codex invocations: 01-Intake.md produces
+01-profile.json; 02-Search.md produces 02-vacancies.json; 03-Adapt.md produces
+result.json. Only the search invocation enables live web search. The source text
+and URL annotations are used; photos, images and OCR are excluded.
+Each stage has its own JSON schema, log and input/output hash receipt in
+pipeline-state.json. Limits/errors preserve completed stages and isolate incomplete
+output. A retry reuses valid stages; changing inputs invalidates dependent stages.
+Search is refreshed if resumed on another processing day. Result language follows
+the CV unless explicitly selected, independently of the interface language.
+Candidate links are classified and named; source coverage and explicit adaptation
+notes accompany each match. Enhanced-mode inferences need customer confirmation.
+It needs an installed, signed-in Codex CLI
 on PATH or at the executable location saved during setup. Launchers pin the local
 Python executable so they also work when double-clicked from Explorer. It consumes
 the operator's subscription allowance only when clicked.
-CLI availability/flags/login were checked; real inference is deliberately not run
+CLI flags are based on the installed integration and official configuration reference:
+https://developers.openai.com/codex/config-reference/
+Real inference is deliberately not run
 by installation or tests. Job folders keep private logs. A failed/limited run
 stops the batch, retains finished outputs, and names partial output
 result.incomplete.json. No background timer or paid API fallback is configured.

@@ -3,7 +3,7 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Entity\ResumeDraft;
-use App\Service\{LocalWork, ManualResumePrompt, ResumeProfilePreparation, ResumeTextExtractor};
+use App\Service\{LocalSearchSettings, LocalWork, ManualResumePrompt, ResumeProfilePreparation, ResumeTextExtractor};
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
@@ -24,7 +24,9 @@ final class ResumeController extends AbstractController
     #[Route('/resume', name: 'app_resume', methods: ['GET'])]
     public function index(): Response
     {
-        return $this->render('resume/index.html.twig', ['draft' => $this->em->getRepository(ResumeDraft::class)->findOneBy(['user' => $this->getUser()]), 'jsonInput' => '']);
+        $last=$this->em->getRepository(\App\Entity\LocalWorkRequest::class)->findOneBy(['user'=>$this->getUser()],['createdAt'=>'DESC']);
+        return $this->render('resume/index.html.twig', ['draft' => $this->em->getRepository(ResumeDraft::class)->findOneBy(['user' => $this->getUser()]), 'jsonInput' => '',
+            'searchSources'=>LocalSearchSettings::SOURCES,'searchOptions'=>(new LocalSearchSettings())->forInput($last?->input??[])]);
     }
     #[Route('/resume/upload', name: 'app_resume_upload', methods: ['POST'])]
     public function upload(Request $request, ResumeTextExtractor $extractor, LockFactory $locks): Response
@@ -85,7 +87,8 @@ final class ResumeController extends AbstractController
             $draft->preparedProfile = $preparation->validate($draft, $json); $this->em->flush();
         } catch (\InvalidArgumentException $error) {
             $this->addFlash('warning', $error->getMessage());
-            return $this->render('resume/index.html.twig', ['draft' => $draft, 'jsonInput' => mb_substr($json, 0, 32000)], new Response(status: 422));
+            return $this->render('resume/index.html.twig', ['draft' => $draft, 'jsonInput' => mb_substr($json, 0, 32000),
+                'searchSources'=>LocalSearchSettings::SOURCES,'searchOptions'=>(new LocalSearchSettings())->normalize([])], new Response(status: 422));
         }
         return $this->redirectToRoute('app_profile', ['resume' => '1'], 303);
     }

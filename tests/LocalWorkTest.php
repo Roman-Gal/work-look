@@ -50,10 +50,11 @@ final class LocalWorkTest extends WebTestCase
     }
     private function validResult(LocalWorkRequest $job): array
     {
-        return ['request_id'=>$job->id,'source_sha256'=>$job->input['source_sha256'],'summary'=>'Verified shortlist.', 'matches'=>[
-            ['title'=>'PHP Developer','company'=>'Example','url'=>'https://example.com/jobs/php','location'=>'Remote Poland','salary'=>'Unknown','fit'=>'PHP','gaps'=>'React unknown',
-            'checked_at'=>date('Y-m-d'),'cv_text'=>"Jane Doe\nPHP Developer\nPHP development at Example Ltd, 2021-present.",'evidence'=>['PHP development at Example Ltd, 2021-present.']]
-        ]];
+        return ['request_id'=>$job->id,'source_sha256'=>$job->input['source_sha256'],'summary'=>'Verified shortlist.', 'protocol_version'=>2,'language'=>'en','candidate_links'=>[],
+            'source_report'=>array_map(static fn($id)=>['source'=>$id,'status'=>'checked','details'=>'Checked fixture.','checked_urls'=>[\App\Service\LocalSearchSettings::SOURCES[$id]['url']]],$job->input['selected_sources']),
+            'matches'=>[['source'=>'solidjobs','title'=>'PHP Developer','company'=>'Example','url'=>'https://solid.jobs/offer/test','location'=>'Remote Poland','salary'=>'Unknown','fit'=>'PHP','gaps'=>'React unknown',
+            'checked_at'=>date('Y-m-d'),'cv_text'=>"Jane Doe\nPHP Developer\nPHP development at Example Ltd, 2021-present.",'evidence'=>['PHP development at Example Ltd, 2021-present.'],
+            'conclusion'=>'Only supported experience was emphasized. No inferred skills added.','adaptations'=>[]]]];
     }
     public function testStoredPdfAndSnapshotsArePrivateAndAllowanceIsUntouched(): void
     {
@@ -108,7 +109,7 @@ final class LocalWorkTest extends WebTestCase
         self::assertEmailCount(1); $email=self::getMailerMessage(); self::assertEmailAddressContains($email,'To',$this->owner->email);
         self::assertStringContainsString('/requests/'.$job->id,$email->getTextBody()); self::assertStringContainsString('Zakon Text',$email->getHtmlBody()); self::assertStringNotContainsString('Jane Doe',$email->getHtmlBody());
         $this->worker('POST',$job->id.'/result',$valid);self::assertResponseIsSuccessful();self::assertEmailCount(0);
-        $this->client->loginUser($this->owner); $this->client->request('GET','/requests/'.$job->id); self::assertSelectorTextContains('h2','PHP Developer');
+        $this->client->loginUser($this->owner); $this->client->request('GET','/requests/'.$job->id); self::assertSelectorTextContains('article h2','PHP Developer');
         $this->client->request('GET','/requests/'.$job->id.'/cv/0.pdf');self::assertResponseIsSuccessful();self::assertStringStartsWith('%PDF-',$this->client->getResponse()->getContent());
         $this->client->loginUser($this->other);$this->client->request('GET','/requests/'.$job->id.'/cv/0.pdf');self::assertResponseStatusCodeSame(404);
     }
@@ -179,5 +180,44 @@ final class LocalWorkTest extends WebTestCase
         $this->uploadResult($job,'not JSON');self::assertResponseStatusCodeSame(400);
         $this->uploadResult($job,'[]');self::assertResponseStatusCodeSame(422);
         $this->em->clear();self::assertNull($this->em->find(LocalWorkRequest::class,$job->id)->result);
+    }
+    public function testSelectedSitesAndPolishCvLanguageReachImmutablePackage(): void
+    {
+        $draft=$this->draft();$draft->text="Jan Przykład\nDoświadczenie zawodowe PHP.\nUmiejętności. Wykształcenie. Języki.";$this->em->flush();
+        $this->client->loginUser($this->owner);$page=$this->client->request('GET','/');
+        self::assertSelectorCount(8,'input[name="sources[]"]');
+        $values=$page->filter('form[action="/requests/new"]')->form()->getPhpValues();
+        $values['sources']=['justjoinit','pracuj'];$values['result_language']='auto';$values['adaptation_mode']='enhanced';
+        $this->client->request('POST','/requests/new',$values);self::assertResponseStatusCodeSame(303);
+        $this->em->clear();$job=$this->em->getRepository(LocalWorkRequest::class)->findOneBy(['user'=>$this->owner]);
+        self::assertSame(['justjoinit','pracuj'],$job->input['selected_sources']);self::assertSame('pl',$job->input['output_language_hint']);self::assertSame('uk',$job->locale);
+        $this->worker('GET',$job->id.'/package');self::assertResponseIsSuccessful();$package=json_decode($this->client->getResponse()->getContent(),true);
+        self::assertSame(2,$package['schema_version']);self::assertSame(['justjoinit','pracuj'],array_keys($package['selected_sources']));
+        self::assertTrue($package['input']['ignore_images']);self::assertStringContainsString('three sequential stages',$package['instructions']);
+        $this->client->loginUser($this->owner);$page=$this->client->request('GET','/');$form=$page->filter('form[action="/requests/new"]')->form();
+        $this->client->submit($form);$this->em->clear();self::assertSame(1,$this->em->getRepository(LocalWorkRequest::class)->count([]));
+        self::assertSame(['justjoinit','pracuj'],$this->em->find(LocalWorkRequest::class,$job->id)->input['selected_sources']);
+    }
+    public function testPolishResultUsesPolishEmailAndShowsInferencesBeforeVacancy(): void
+    {
+        $job=self::getContainer()->get(LocalWork::class)->start($this->draft(),'uk',['requested_language'=>'pl']);
+        $data=$this->validResult($job);$data['language']='pl';$data['summary']='Dopasowane oferty.';
+        $data['matches'][0]['conclusion']='Wzmocniono opis. Znajomość narzędzia jest założeniem do potwierdzenia.';
+        $data['matches'][0]['adaptations']=[['kind'=>'inference','description'=>'Założono podstawy narzędzia powiązanego z PHP.','basis'=>'PHP development at Example Ltd, 2021-present.']];
+        $this->worker('POST',$job->id.'/result',$data);self::assertResponseIsSuccessful();self::assertEmailCount(1);
+        self::assertStringContainsString('Twój wynik',self::getMailerMessage()->getSubject());
+        $this->client->loginUser($this->owner);$page=$this->client->request('GET','/requests/'.$job->id);
+        self::assertSelectorExists('article[lang="pl"]');self::assertSelectorTextContains('.cv-conclusion','Podsumowanie i zmiany w CV');
+        self::assertSelectorTextContains('.adaptation-inference','wymaga Twojego potwierdzenia');
+        $article=$page->filter('article')->html();self::assertLessThan(strpos($article,'<h2>'),strpos($article,'cv-conclusion'));
+    }
+    public function testOlderCompletedResultCanStillBeRetriedWithoutNewFieldsOrEmail(): void
+    {
+        $job=$this->job();$data=$this->validResult($job);unset($job->input['workflow_version']);
+        foreach(['protocol_version','language','candidate_links','source_report'] as $field){unset($data[$field]);}
+        foreach(['source','conclusion','adaptations'] as $field){unset($data['matches'][0][$field]);}
+        $job->result=$data;$job->status='completed';$job->notificationSentAt=new \DateTimeImmutable();$this->em->flush();
+        $this->worker('POST',$job->id.'/result',$data);self::assertResponseIsSuccessful();self::assertEmailCount(0);
+        self::assertTrue(json_decode($this->client->getResponse()->getContent(),true)['notification_sent']);
     }
 }

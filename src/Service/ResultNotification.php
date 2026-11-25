@@ -22,12 +22,13 @@ final class ResultNotification
             || ($parts['scheme']??'')!=='https' || empty($parts['host']) || isset($parts['user']) || isset($parts['pass'])
             || isset($parts['query']) || isset($parts['fragment']) || !in_array($parts['path']??'',['','/'],true)) { return false; }
         $link=rtrim($this->origin,'/').'/requests/'.$job->id;
-        $subject=$this->translator->trans('batch.mail_subject',[],null,$job->locale);
-        $body=$this->translator->trans('batch.mail_body',[],null,$job->locale);
-        $button=$this->translator->trans('batch.open',[],null,$job->locale);
+        $locale=$job->result['language']??$job->locale;if(!in_array($locale,['pl','uk','en'],true)){$locale=$job->locale;}
+        $subject=$this->translator->trans('batch.mail_subject',[],null,$locale);
+        $body=$this->translator->trans('batch.mail_body',[],null,$locale);
+        $button=$this->translator->trans('batch.open',[],null,$locale);
         try {
             $this->mailer->send((new Email())->from($this->from)->to($job->user->email)->subject($subject)->text($body."\n\n".$link)
-                ->html($this->twig->render('email/result.html.twig',['subject'=>$subject,'body'=>$body,'button'=>$button,'link'=>$link,'origin'=>rtrim($this->origin,'/'),'locale'=>$job->locale])));
+                ->html($this->twig->render('email/result.html.twig',['subject'=>$subject,'body'=>$body,'button'=>$button,'link'=>$link,'origin'=>rtrim($this->origin,'/'),'locale'=>$locale])));
             $job->notificationSentAt=new \DateTimeImmutable(); $this->em->flush(); return true;
         } catch (\Throwable) { $this->logger->warning('WorkLook result notification pending.', ['request_id'=>$job->id]); return false; }
     }

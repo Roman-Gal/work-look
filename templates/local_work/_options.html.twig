@@ -1,0 +1,6 @@
+<fieldset class="search-options"><legend>{{ 'workflow.sources'|trans }}</legend>
+<p class="help-text">{{ 'workflow.sources_help'|trans }}</p>
+<div class="search-source-grid">{% for id, source in searchSources %}<label class="search-source"><input type="checkbox" name="sources[]" value="{{ id }}"{% if id in searchOptions.selected_sources %} checked{% endif %}><span><strong>{{ source.name }}</strong><small>{{ source.domain }}</small></span></label>{% endfor %}</div>
+</fieldset>
+<div class="search-option-columns"><div><label for="result-language">{{ 'workflow.language'|trans }}</label><select id="result-language" name="result_language">{% for code in ['auto','pl','uk','en'] %}<option value="{{ code }}"{% if code == searchOptions.requested_language %} selected{% endif %}>{{ ('workflow.language.' ~ code)|trans }}</option>{% endfor %}</select><p class="help-text">{{ 'workflow.language_help'|trans }}</p></div>
+<div><label for="adaptation-mode">{{ 'workflow.adaptation'|trans }}</label><select id="adaptation-mode" name="adaptation_mode">{% for mode in ['enhanced','strict'] %}<option value="{{ mode }}"{% if mode == searchOptions.adaptation_mode %} selected{% endif %}>{{ ('workflow.adaptation.' ~ mode)|trans }}</option>{% endfor %}</select><p class="help-text">{{ 'workflow.adaptation_help'|trans }}</p></div></div>

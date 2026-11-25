@@ -1,5 +1,50 @@
 WorkLook operator-assisted processing — 2026-11-25
 
+Three-stage workflow update (prepared locally; deployment recorded separately)
+-------------------------------------------------------------------------
+New requests snapshot selected_sources, requested_language (auto/pl/uk/en),
+adaptation_mode (enhanced/strict), source/output language hints, interface locale
+and ignore_images in the existing JSON input. No database migration is required.
+The public source selector supports SOLID.Jobs, DOU, Djinni, Just Join IT,
+No Fluff Jobs, Pracuj.pl, Work.ua and robota.ua. These are targets for the local
+agent's public-page research, not eight newly implemented API adapters. Failed or
+restricted access must be reported; no login/CAPTCHA/paywall bypass is configured.
+
+Package schema 2 contains only selected source metadata and relevant owner/shared
+KB. It drives three saved stages with separate JSON schemas: 01-profile.json
+(source-language analysis, source quotes and typed links), 02-vacancies.json
+(current vacancies with description text and a status for every selected site),
+then result.json (language, classified candidate links, coverage and tailored CVs).
+Only stage 2 enables web search. Photos, illustrations and OCR are excluded.
+The manual desktop-app route follows the same three prompts and output files.
+
+CLI stage receipts bind package and predecessor hashes. Completed stages are
+reused after limits/errors; output is promoted atomically only after schema and
+request/source identity checks. The search-stage dependency also includes the
+processing day. Old queued packages use their own older protocol when necessary.
+Existing completed result files/receipts are preserved. Publication still requires
+an operator review and does not rerun AI or submit applications.
+
+In automatic language mode the intake stage chooses the source CV language,
+overriding the interface locale for explanations and CVs. Explicit output choice
+takes precedence. Supported outputs are Polish, Ukrainian and English; other or
+ambiguous source languages fall back to the supplied hint with a disclosure.
+The chosen result language also controls result labels, PDF metadata and email.
+
+Strict mode permits supported wording changes only. The owner explicitly requested
+an enhanced mode: stronger phrasing and modest adjacent-skill/responsibility
+inferences, each carrying a verbatim source basis and an explicit confirmation
+warning in the conclusion above that vacancy. Employers, titles, qualifications,
+dates, numeric achievements, language levels, legal eligibility and years of
+experience must not be fabricated. The previous API/profile-fact renderer remains
+strict. A quote match establishes provenance, not truth/entailment; operator and
+customer review remain required. Classification labels never invent profile URLs.
+
+Protocol 2 publication validates language choice, selected-source vacancy domains,
+coverage of every selected source, candidate-link containment, adaptation kinds
+and quoted bases. Legacy protocol 1 completion/retry stays compatible. Production
+email sends and real inference are excluded from installation/testing.
+
 The initial MVP uses a manual daily operator workflow. MyDevil stores source PDFs
 as private PostgreSQL BYTEA values, alongside extracted text and versioned privacy
 acknowledgement. Existing text-only drafts remain intact and must be reuploaded

@@ -1,0 +1,24 @@
+Local public-page search catalog — checked 2026-11-25
+==================================================
+
+The eight source-selection targets point at their primary job portals:
+SOLID.Jobs: https://solid.jobs/
+DOU: https://jobs.dou.ua/
+Djinni: https://djinni.co/jobs/
+Just Join IT: https://justjoin.it/
+No Fluff Jobs: https://nofluffjobs.com/
+Pracuj.pl: https://www.pracuj.pl/
+Work.ua: https://www.work.ua/
+robota.ua: https://robota.ua/
+
+Their public landing/listing pages were inspected while preparing this update.
+This does not prove continuous accessibility or complete job descriptions for
+every posting. JavaScript, login and access restrictions may limit a given run.
+The local agent must return checked/no_results/blocked/not_checked coverage for
+each selected target and must not invent offers when retrieval is incomplete.
+The existing paid-API alternative still has only its original three adapters.
+
+Codex configuration reference for the local staged runner:
+https://developers.openai.com/codex/config-reference/
+web_search=disabled removes search from intake/adaptation; stage 2 uses live.
+The integration retains subscription login, workspace-write and isolated folders.
