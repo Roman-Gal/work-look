@@ -6,10 +6,12 @@ use App\Entity\User;
 use Doctrine\DBAL\Connection;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
+use Symfony\Component\Security\Core\Authentication\Token\SwitchUserToken;
 
 final class ActivityRecorder
 {
-    public function __construct(private Connection $db, private IpLocation $location, private LoggerInterface $logger) {}
+    public function __construct(private Connection $db, private IpLocation $location, private LoggerInterface $logger, private TokenStorageInterface $tokens) {}
 
     public function record(Request $request, string $kind, int $status, ?User $user = null, array $context = []): bool
     {
@@ -23,6 +25,11 @@ final class ActivityRecorder
             $path = $route !== '' ? $request->getPathInfo() : '[unmatched]';
             $referrer = parse_url($request->headers->get('Referer', ''), PHP_URL_HOST);
             $context += $this->client($request->headers->get('User-Agent', ''));
+            $context += $request->attributes->get('_activity_impersonation', []);
+            $token = $this->tokens->getToken();
+            if ($token instanceof SwitchUserToken && $token->getOriginalToken()->getUser() instanceof User && $token->getUser() instanceof User) {
+                $context += ['impersonator_user_id' => $token->getOriginalToken()->getUser()->id, 'effective_user_id' => $token->getUser()->id];
+            }
             $actorId = $user?->id ? (string) $user->id : null;
             $actorName = $user?->email;
             if ($kind === 'login_failure') {

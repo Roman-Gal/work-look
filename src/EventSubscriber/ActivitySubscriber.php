@@ -8,6 +8,7 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpKernel\Event\{RequestEvent, ResponseEvent};
 use Symfony\Component\HttpKernel\KernelEvents;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
+use Symfony\Component\Security\Core\Authentication\Token\SwitchUserToken;
 use Symfony\Component\Security\Http\Event\{LoginFailureEvent, LoginSuccessEvent, LogoutEvent};
 
 final class ActivitySubscriber implements EventSubscriberInterface
@@ -30,6 +31,12 @@ final class ActivitySubscriber implements EventSubscriberInterface
     {
         $event->getRequest()->attributes->set('_activity_auth', 'logout');
         $event->getRequest()->attributes->set('_activity_user', $event->getToken()?->getUser());
+        $token = $event->getToken();
+        if ($token instanceof SwitchUserToken && $token->getOriginalToken()->getUser() instanceof User && $token->getUser() instanceof User) {
+            $event->getRequest()->attributes->set('_activity_impersonation', [
+                'impersonator_user_id' => $token->getOriginalToken()->getUser()->id, 'effective_user_id' => $token->getUser()->id,
+            ]);
+        }
     }
     public function finish(ResponseEvent $event): void
     {

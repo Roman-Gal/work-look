@@ -1,5 +1,5 @@
 WorkLook administration and activity statistics
-2026-11-24
+2026-11-27
 
 The private /admin screen is separate from the normal search dashboard. Only the
 single administrator can access statistics and /admin/users. Navigation is visible
@@ -15,12 +15,23 @@ Administrator identity
   environment variable private; do not put passwords in shell arguments or Git.
 - Repeat provisioning preserves the password. An existing unmarked account at the
   reserved address is refused rather than silently taken over.
-- The administrator can inspect/edit profiles, inspect searches and private PDFs,
-  cancel active searches, change match statuses, and suspend/enable AI permission.
-  CSRF and normal validation still apply. No impersonation or password disclosure.
+- The administrator can inspect searches and private PDFs, cancel active searches,
+  change match statuses, and suspend/enable AI permission. The separate admin
+  profile editor and its POST operation have been removed.
+- "Log in as user" on the user list/detail uses Symfony SwitchUserToken for a
+  verified ordinary account. Entry and return require POST + session CSRF tokens;
+  raw switch parameters in query strings, bodies or headers have no effect.
+  Passwords, verification, roles, AI permission and allowance are unchanged.
+  The effective user has only their normal access; nested switching is forbidden.
+  A visible banner on desktop/mobile returns to the original administrator.
+  Session IDs are regenerated on both transitions. Logout ends the whole session.
+- Both transitions require a successful admin_action audit before the token changes.
+  The original administrator is refreshed and rechecked before returning. Requests
+  during impersonation, including logout, record impersonator_user_id and
+  effective_user_id; the log visibly labels the administrator's involvement.
 - Access changes do not replenish free-search allowances, including the owner's.
   No paid entitlement or unlimited AI usage is introduced by this feature.
-- Profile/access/status/cancellation changes made by the administrator require a
+- Access/status/cancellation changes made by the administrator require a
   successful audit insert in the same transaction. Audit failure rolls back them.
   Routine visit logging is best effort and never makes a page or gateway fail.
 - app:reset-test-data refuses to delete a separately provisioned administrator.

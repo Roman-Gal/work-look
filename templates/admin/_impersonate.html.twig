@@ -1,0 +1,10 @@
+{% if not target.administrator %}
+    {% if target.isVerified %}
+        <form action="{{ path('app_admin_user_impersonate', {id: target.id}) }}" method="post" data-turbo="false">
+            <input type="hidden" name="_token" value="{{ csrf_token('admin_impersonate_' ~ target.id) }}">
+            <button class="button secondary" type="submit">{{ 'admin.impersonate'|trans }}</button>
+        </form>
+    {% else %}
+        <span class="help-text">{{ 'admin.impersonate_unverified'|trans }}</span>
+    {% endif %}
+{% endif %}

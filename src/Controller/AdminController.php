@@ -2,9 +2,8 @@
 declare(strict_types=1);
 namespace App\Controller;
 
-use App\Entity\{AgentRun, JobMatch, Profile, User};
-use App\Form\ProfileType;
-use App\Service\{ActivityQuery, ActivityRecorder, IpLocation};
+use App\Entity\{AgentRun, JobMatch, User};
+use App\Service\{ActivityQuery, ActivityRecorder, IpLocation, UserImpersonator};
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\{Request, Response};
@@ -35,25 +34,22 @@ final class AdminController extends AbstractController
         $users = $qb->select('u')->orderBy('u.createdAt', 'DESC')->setFirstResult(($page - 1) * 50)->setMaxResults(50)->getQuery()->getResult();
         return $this->render('admin/users.html.twig', compact('users', 'q', 'count', 'page'));
     }
-    #[Route('/admin/users/{id}', name: 'app_admin_user', methods: ['GET', 'POST'], requirements: ['id' => '\d+'])]
-    public function user(int $id, Request $request): Response
+    #[Route('/admin/users/{id}', name: 'app_admin_user', methods: ['GET'], requirements: ['id' => '\d+'])]
+    public function user(int $id): Response
     {
         $user = $this->em->find(User::class, $id) ?? throw $this->createNotFoundException();
-        $profile = $this->em->getRepository(Profile::class)->findOneBy(['user' => $user]) ?? new Profile($user);
-        $form = $this->createForm(ProfileType::class, $profile); $form->handleRequest($request);
-        if ($form->isSubmitted() && $form->isValid()) {
-            $this->em->wrapInTransaction(function () use ($profile, $request, $id): void {
-                $profile->updatedAt = new \DateTimeImmutable(); $this->em->persist($profile); $this->em->flush();
-                if (!$this->activity->record($request, 'admin_action', 303, $this->getUser(), ['action' => 'profile_updated', 'target_user_id' => $id])) {
-                    throw new \RuntimeException('Administrator action audit unavailable.');
-                }
-            });
-            $this->addFlash('success', 'flash.saved'); return $this->redirectToRoute('app_admin_user', ['id' => $id], 303);
-        }
-        return $this->render('admin/user.html.twig', ['targetUser' => $user, 'profile' => $profile, 'form' => $form,
+        return $this->render('admin/user.html.twig', ['targetUser' => $user,
             'runs' => $this->em->getRepository(AgentRun::class)->findBy(['user' => $user], ['createdAt' => 'DESC'], 30),
             'matches' => $this->em->createQueryBuilder()->select('m', 'j', 'r')->from(JobMatch::class, 'm')->join('m.run', 'r')->join('m.job', 'j')
                 ->where('r.user = :user')->setParameter('user', $user)->orderBy('m.createdAt', 'DESC')->setMaxResults(30)->getQuery()->getResult()]);
+    }
+    #[Route('/admin/users/{id}/impersonate', name: 'app_admin_user_impersonate', methods: ['POST'], requirements: ['id' => '\d+'])]
+    public function impersonate(int $id, Request $request, UserImpersonator $impersonator): Response
+    {
+        if (!$this->isCsrfTokenValid('admin_impersonate_'.$id, $request->request->getString('_token'))) { throw $this->createAccessDeniedException(); }
+        $target = $this->em->find(User::class, $id) ?? throw $this->createNotFoundException();
+        $impersonator->enter($request, $target);
+        return $this->redirectToRoute('app_dashboard', [], 303);
     }
     #[Route('/admin/users/{id}/ai', name: 'app_admin_user_ai', methods: ['POST'], requirements: ['id' => '\d+'])]
     public function ai(int $id, Request $request): Response
